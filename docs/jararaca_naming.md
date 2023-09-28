@@ -1,5 +1,16 @@
 # Jararaca Naming and Folder Conventions
 
+## TL;dr:
+
+The *Jararaca*  repository is organized into several directories: `docs/` for documentation, `interfaces/` for interface classes, `modules/` for concrete classes, and `tests/` for test cases. Interface classes are stored in `interfaces/` and should end with `-able`. Concrete classes are descriptive and sorted by function in `modules/`. Application-specific classes are placed in `apps/{app_name}/`. Documentation resides in `docs/`, with specific naming to reflect the content. Test cases are explicit and located in `tests/`. 
+
+Example paths include:
+- `interfaces/loggable.py`
+- `modules/io/yaml_file_reader.py`
+- `apps/{app_name}/implementation.py`
+- `docs/module_docs.md`
+- `tests/test_file_reader.py`
+
 ## Repository File Structure:
 
 ```plaintext

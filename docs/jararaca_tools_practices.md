@@ -1,4 +1,33 @@
-# Jararaca Tool's & Best Practices for Improved Python Coding
+# Jararaca's Tools & Best Practices for Improved Python Coding
+
+## TL;DR
+
+### 1. **Code Formatting and Style:**
+   - **Tools:** `mypy` for static typing, `black` for uniform and PEP 8 compliant formatting, `pylint` and `flake8` for linting, and `McCabe` for complexity measurement.
+
+### 2. **Documentation and Comments:**
+   - **Tools:** `darglint` for docstring format enforcement, `Sphinx` and `Read the Docs` for automated documentation generation.
+   - **Guideline:** Follow Google Style Python Docstrings.
+
+### 3. **Testing and Quality Assurance:**
+   - **Tools:** `unittest.mock` for mocking, `Hypothesis` for property-based testing, `pytest` for unit testing, `coverage.py` for code coverage, `bandit` and `pyup.io` for security analysis, and `SonarQube` for continuous inspection.
+
+### 4. **Continuous Integration and Deployment:**
+   - **Tools:** `Terraform` for infrastructure, Jenkins or GitHub Actions for CI/CD pipelines, and Docker and Kubernetes for containerization.
+
+### 5. **Version Control and Dependency Management:**
+   - **Tools:** `poetry` or `pipenv` for dependency management.
+   - **Guideline:** Use Git’s feature-branch workflow and semantic versioning.
+
+### 6. **Performance and Optimization:**
+   - **Tools:** `memory_profiler` for memory profiling, `safety` for dependency security, `cProfile` or `line_profiler` for performance profiling.
+   - **Guideline:** Explore async capabilities and concurrent.futures.
+
+### 7. **Development Environment and Interactive Prototyping:**
+   - **Tools:** `conda` for environment management, Jupyter notebooks, or IPython for interactive computing.
+
+### 8. **Code Management and Import Organization:**
+   - **Tools:** `sourcery` for automated refactoring, `pre-commit` for pre-commit management, `ReviewNB` for notebook review, and `isort` for
 
 ## 1. Code Formatting and Style
 

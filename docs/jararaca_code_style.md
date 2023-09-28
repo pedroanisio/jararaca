@@ -1,4 +1,4 @@
-# Jararaca Code Style Guide and Practices
+# Jararaca's Code Style Guide and Practices
 
 ## TL;DR:
 
