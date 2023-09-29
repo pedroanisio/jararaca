@@ -32,15 +32,56 @@
 
 ## Jararaca Naming and Folder Conventions
 
+The _Jararaca_ project emphasizes rational organization and coherent naming conventions to enhance clarity, maintainability, and scalability. The project's structure divides interface and module classes into distinct sub-packages, reflecting their roles and usage contexts.
 
-The *Jararaca*  repository is organized into several directories: `docs/` for documentation, `interfaces/` for interface classes, `modules/` for concrete classes, and `tests/` for test cases. Interface classes are stored in `interfaces/` and should end with `-able`. Concrete classes are descriptive and sorted by function in `modules/`. Application-specific classes are placed in `apps/{app_name}/`. Documentation resides in `docs/`, with specific naming to reflect the content. Test cases are explicit and located in `tests/`. 
+- **Directory Structure:**
+  - `interfaces/`: Holds definitions of contracts and interface classes.
+  - `modules/`: Contains concrete class implementations.
+  - `docs/`: Allocated for comprehensive documentation.
+  - `tests/`: Organizes testing suites and cases.
+  - `apps/`: Stores implementations specific to applications.
 
-Example paths include:
-- `interfaces/loggable.py`
-- `modules/io/yaml_file_reader.py`
-- `apps/{app_name}/implementation.py`
-- `docs/module_docs.md`
-- `tests/test_file_reader.py`
+- **Group Definitions:**
+  - `util`: Hosts reusable utility classes/functions.
+  - `io`: Manages classes/functions for Input/Output operations.
+  - `linux`: Houses classes/functions specific to the Linux operating system.
+
+- **Naming Guidelines:**
+  - Names should be descriptive, succinct, in singular form, and domain-specific.
+  - Group names should use lowercase alphabets, avoiding spaces or special characters.
+
+- **Naming Procedure:**
+  - Identify shared themes, generate reflective and concise names, evaluate and select the most fitting name ensuring adherence to protocols.
+
+- **Naming Examples:**
+  - Database Operations: `database`
+  - Utility Functions/Classes: `util`
+  - Input/Output Operations: `io`
+  - User Management Classes: `user`
+
+- **Importance of Naming Conventions:**
+  - Ensures clearness, consistency, readability, and maintainability.
+  - Aligns interfaces with their implementations, facilitating effective code navigation and adjustments.
+
+- **Specific Naming and Location Conventions:**
+  - **Interfaces:** Names should append `-able` and be located in `interfaces/{group}`.
+  - **Concrete Classes:** Names should be indicative of functions and be placed in `modules/{group}`.
+  - **Application-specific Classes:** Should have project-related names and be located in `apps/{app_name}/`.
+  - **Documentation:** Should be housed in the `docs/` directory with descriptive filenames.
+  - **Test Cases:** Should clearly reflect the functionality being tested and be organized within the `tests/` directory.
+
+### Examples:
+
+- **Interfaces:**
+  - `interfaces/util/loggable.py` (Logging functionalities)
+- **Concrete Classes:**
+  - `modules/io/yaml_file_reader.py` (Reading file operations)
+- **Application-specific Classes:**
+  - `apps/{app_name}/implementation.py` (Unique needs of `{app_name}`)
+- **Documentation:**
+  - `docs/module_docs.md` (Details of various project modules)
+- **Test Cases:**
+  - `tests/test_file_reader.py` (Tests for `file_reader.py` class)
 
 ## Jararaca's Tools & Best Practices for Improved Python Coding
 
