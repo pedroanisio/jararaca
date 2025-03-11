@@ -52,7 +52,7 @@ class TestImportsCheck(unittest.TestCase):
         # Setup the mock to return a failing check
         mock_run_command.return_value = MagicMock(
             returncode=1,
-            stdout="ERROR: src/code_quality/pipeline.py Imports are incorrectly sorted.",
+            stdout="ERROR: src/code_quality/chain_pipeline.py Imports are incorrectly sorted.",
             stderr="",
         )
 
@@ -78,7 +78,7 @@ class TestImportsCheck(unittest.TestCase):
         # Setup the mock to return an error
         mock_run_command.return_value = MagicMock(
             returncode=1,
-            stdout="ERROR: src/code_quality/pipeline.py Imports are incorrectly sorted.",
+            stdout="ERROR: src/code_quality/chain_pipeline.py Imports are incorrectly sorted.",
             stderr="Error processing file: syntax error",
         )
 
