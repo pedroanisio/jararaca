@@ -253,7 +253,7 @@ def function_with_syntax_error():
         """Test the function length check when no project path is provided."""
         context = {"project_path": "", "source_dirs": ["src"]}
 
-        # Patch the CheckResult constructor to handle the 'message' parameter
+        # Patch the CheckResult constructor to handle the 'details' parameter
         with patch(
             "code_quality.links.function_length.CheckResult"
         ) as mock_check_result:
@@ -273,7 +273,7 @@ def function_with_syntax_error():
             mock_check_result.assert_called_once_with(
                 name="Function Length",
                 status=CheckStatus.FAILED,
-                message="No project path provided",
+                details="No project path provided",
             )
 
             # Check that the result was created correctly

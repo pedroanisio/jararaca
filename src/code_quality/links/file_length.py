@@ -6,7 +6,7 @@ This module provides a check that verifies Python files do not exceed a maximum 
 
 import logging
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple, Union
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus
@@ -32,25 +32,34 @@ class FileLengthCheck(CheckLink):
 
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
-        Check file lengths in Python files.
+        Check Python files for length.
 
         Args:
-            context: A dictionary containing context for the check.
-                - project_path: The path to the project to check.
-                - source_dirs: List of source directories to check.
+            context: Context dictionary containing project_path and source_dirs.
 
         Returns:
-            A list containing the result of the file length check.
+            List of CheckResult objects.
         """
-        project_path = context.get("project_path", ".")
+        project_path = context.get("project_path", "")
         source_dirs = context.get("source_dirs", ["src"])
 
-        long_files = []
+        if not project_path:
+            return [
+                CheckResult(
+                    name=self.name,
+                    status=CheckStatus.FAILED,
+                    details="No project path provided",
+                )
+            ]
 
-        # Check each source directory
-        for source_dir in source_dirs:
-            dir_path = os.path.join(project_path, source_dir)
+        # Initialize results
+        long_files: List[Tuple[str, Union[int, str]]] = []
+
+        # Find Python files
+        for dir_name in source_dirs:
+            dir_path = os.path.join(project_path, dir_name)
             if not os.path.exists(dir_path):
+                logging.warning(f"Source directory '{dir_name}' does not exist, skipping.")
                 continue
 
             # Walk through the directory
@@ -60,8 +69,6 @@ class FileLengthCheck(CheckLink):
                         continue
 
                     file_path = os.path.join(root, file)
-
-                    # Count the number of lines in the file
                     try:
                         with open(file_path, "r", encoding="utf-8") as f:
                             line_count = sum(1 for _ in f)
