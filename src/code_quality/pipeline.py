@@ -17,7 +17,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
 
-from .utils import Colors, format_result_output, run_command
+from rich.panel import Panel
+
+from .utils import Colors, console, create_summary_table, print_rich_result, run_command
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -137,10 +139,8 @@ class CodeQualityPipeline:
         """
         self.results = []
         logger.info("Starting Python Code Quality Pipeline.")
-        print(
-            f"\n{Colors.HEADER}{Colors.BOLD}Running Python Code Quality Pipeline{Colors.ENDC}"
-        )
-        print(f"{Colors.BLUE}Project path: {self.project_path}{Colors.ENDC}\n")
+        console.print(Panel("Running Python Code Quality Pipeline", style="header"))
+        console.print(f"Project path: [info]{self.project_path}[/info]", style="info")
 
         self._check_formatting()
         self._check_imports()
@@ -170,24 +170,21 @@ class CodeQualityPipeline:
         passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
         failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
         skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)
-        summary = (
-            f"\n{Colors.HEADER}{Colors.BOLD}Pipeline Summary:{Colors.ENDC}\n"
-            f"{Colors.GREEN}Passed: {passed}{Colors.ENDC}\n"
-            f"{Colors.FAIL}Failed: {failed}{Colors.ENDC}\n"
-            f"{Colors.BLUE}Skipped: {skipped}{Colors.ENDC}\n"
-        )
-        print(summary)
+
+        # Print the summary table
+        console.print(create_summary_table(passed, failed, skipped))
+
         logger.info(
             f"Pipeline Summary - Passed: {passed}, Failed: {failed}, Skipped: {skipped}"
         )
+
+        # Print final result
         if failed == 0:
-            print(
-                f"\n{Colors.GREEN}{Colors.BOLD}✓ All quality checks passed!{Colors.ENDC}"
-            )
+            console.print("✓ All quality checks passed!", style="success")
             logger.info("All quality checks passed!")
         else:
-            print(
-                f"\n{Colors.FAIL}{Colors.BOLD}✗ Some quality checks failed. See details above.{Colors.ENDC}"
+            console.print(
+                "✗ Some quality checks failed. See details above.", style="error"
             )
             logger.warning("Some quality checks failed.")
 
@@ -203,6 +200,11 @@ class CodeQualityPipeline:
                         "All files are properly formatted.",
                     )
                 )
+                print_rich_result(
+                    "Code Formatting (Black)",
+                    CheckStatus.PASSED.value,
+                    "All files are properly formatted.",
+                )
                 logger.info("Black formatting check passed.")
             else:
                 self.results.append(
@@ -211,6 +213,11 @@ class CodeQualityPipeline:
                         CheckStatus.FAILED,
                         f"Files need formatting:\n{result.stderr}",
                     )
+                )
+                print_rich_result(
+                    "Code Formatting (Black)",
+                    CheckStatus.FAILED.value,
+                    f"Files need formatting:\n{result.stderr}",
                 )
                 logger.error("Black formatting check failed.")
         except Exception as e:
@@ -221,37 +228,57 @@ class CodeQualityPipeline:
                     f"Error running Black: {str(e)}",
                 )
             )
+            print_rich_result(
+                "Code Formatting (Black)",
+                CheckStatus.FAILED.value,
+                f"Error running Black: {str(e)}",
+            )
             logger.exception("Error running Black.")
 
     def _check_imports(self) -> None:
-        """Check import ordering with isort."""
+        """Check import sorting with isort."""
         try:
-            result = self._run_command(["isort", "--check", "."])
+            result = self._run_command(["isort", "--check", "--profile", "black", "."])
             if result.returncode == 0:
                 self.results.append(
                     CheckResult(
-                        "Import Ordering (isort)",
+                        "Import Sorting (isort)",
                         CheckStatus.PASSED,
-                        "All imports are properly ordered.",
+                        "All imports are properly sorted.",
                     )
+                )
+                print_rich_result(
+                    "Import Sorting (isort)",
+                    CheckStatus.PASSED.value,
+                    "All imports are properly sorted.",
                 )
                 logger.info("isort check passed.")
             else:
                 self.results.append(
                     CheckResult(
-                        "Import Ordering (isort)",
+                        "Import Sorting (isort)",
                         CheckStatus.FAILED,
-                        f"Improperly ordered imports:\n{result.stdout}",
+                        f"Files need import sorting:\n{result.stdout}",
                     )
+                )
+                print_rich_result(
+                    "Import Sorting (isort)",
+                    CheckStatus.FAILED.value,
+                    f"Files need import sorting:\n{result.stdout}",
                 )
                 logger.error("isort check failed.")
         except Exception as e:
             self.results.append(
                 CheckResult(
-                    "Import Ordering (isort)",
+                    "Import Sorting (isort)",
                     CheckStatus.FAILED,
                     f"Error running isort: {str(e)}",
                 )
+            )
+            print_rich_result(
+                "Import Sorting (isort)",
+                CheckStatus.FAILED.value,
+                f"Error running isort: {str(e)}",
             )
             logger.exception("Error running isort.")
 
@@ -515,14 +542,47 @@ class CodeQualityPipeline:
                             f"Coverage: {coverage_pct}% (min: {min_coverage}%)",
                         )
                     )
+                    print_rich_result(
+                        "Test Coverage",
+                        CheckStatus.PASSED.value,
+                        f"Coverage: {coverage_pct}% (min: {min_coverage}%)"
+                    )
                     logger.info(f"Coverage check passed: {coverage_pct}%")
                 else:
+                    # Parse the coverage report to extract file-specific information
+                    coverage_lines = cov_result.stdout.strip().split('\n')
+                    
+                    # Create a more detailed message
+                    missing_coverage = []
+                    for line in coverage_lines:
+                        if line.startswith('src/') and not line.startswith('TOTAL'):
+                            parts = re.split(r'\s+', line.strip())
+                            if len(parts) >= 4:
+                                file_path, stmts, miss, cover = parts[:4]
+                                if int(miss) > 0:  # If there are missing statements
+                                    missing_lines = ""
+                                    if len(parts) > 4 and parts[-1].startswith("Missing"):
+                                        missing_lines = f" - Missing lines: {parts[-1].replace('Missing', '').strip()}"
+                                    missing_coverage.append(f"[yellow]{file_path}[/yellow]: {cover} coverage ({miss} statements not covered){missing_lines}")
+                    
+                    detailed_msg = (
+                        f"[bold red]Coverage: {coverage_pct}% below minimum {min_coverage}%[/bold red]\n\n"
+                        f"[bold]Files needing more test coverage:[/bold]\n"
+                        + "\n".join(missing_coverage) + "\n\n"
+                        f"[bold cyan]How to fix:[/bold cyan] Add more unit tests for the files listed above, focusing on the missing lines."
+                    )
+                    
                     self.results.append(
                         CheckResult(
                             "Test Coverage",
                             CheckStatus.FAILED,
                             f"Coverage: {coverage_pct}% below minimum {min_coverage}%\n{cov_result.stdout}",
                         )
+                    )
+                    print_rich_result(
+                        "Test Coverage",
+                        CheckStatus.FAILED.value,
+                        detailed_msg
                     )
                     logger.error(
                         f"Coverage check failed: {coverage_pct}% < {min_coverage}%"
@@ -535,6 +595,11 @@ class CodeQualityPipeline:
                         f"Failed to parse coverage:\n{cov_result.stdout}",
                     )
                 )
+                print_rich_result(
+                    "Test Coverage",
+                    CheckStatus.FAILED.value,
+                    f"[bold red]Failed to parse coverage report[/bold red]\n\n{cov_result.stdout}\n\n[bold cyan]How to fix:[/bold cyan] Ensure your tests are running correctly and coverage is being generated."
+                )
                 logger.error("Failed to parse coverage percentage.")
         except Exception as e:
             self.results.append(
@@ -543,6 +608,11 @@ class CodeQualityPipeline:
                     CheckStatus.FAILED,
                     f"Error checking coverage: {str(e)}",
                 )
+            )
+            print_rich_result(
+                "Test Coverage",
+                CheckStatus.FAILED.value,
+                f"[bold red]Error checking coverage:[/bold red] {str(e)}\n\n[bold cyan]How to fix:[/bold cyan] Ensure coverage and pytest are installed correctly."
             )
             logger.exception("Error checking test coverage.")
 
@@ -830,112 +900,117 @@ class CodeQualityPipeline:
 
     def process_branch_and_commit(self) -> bool:
         """
-        If all quality checks passed and auto-commit is enabled, process branch merging and commit.
+        Process the branch and commit changes if auto_commit is enabled.
+
+        This method will:
+        1. Check if we're on a feature branch
+        2. Commit any changes if there are uncommitted changes
+        3. Checkout main branch
+        4. Pull latest changes
+        5. Merge the feature branch
+        6. Push the changes to remote
+        7. Delete the feature branch
 
         Returns:
-            True if processing was successful, False otherwise
+            True if all steps completed successfully, False otherwise
         """
-        if not all(
-            r.status == CheckStatus.PASSED
-            for r in self.results
-            if r.status != CheckStatus.SKIPPED
-        ):
-            logger.error("Quality checks did not pass. Aborting branch processing.")
-            print(
-                f"\n{Colors.FAIL}Cannot process branch - some quality checks failed.{Colors.ENDC}"
-            )
-            return False
-
-        if not self.config.getboolean("general", "enable_auto_commit"):
-            logger.info("Auto-commit disabled in configuration.")
-            print(
-                f"\n{Colors.BLUE}Auto-commit is disabled in configuration.{Colors.ENDC}"
+        if not self.config.getboolean("general", "enable_auto_commit", fallback=False):
+            logger.info("Auto-commit is disabled. Skipping branch processing.")
+            console.print(
+                "Auto-commit is disabled. Skipping branch processing.", style="info"
             )
             return True
 
         try:
             logger.info("Starting branch and commit processing.")
-            print(
-                f"\n{Colors.HEADER}Starting branch and commit processing...{Colors.ENDC}"
+            console.print(
+                Panel("Starting branch and commit processing...", style="header")
             )
+
             branch_result = self._run_command(["git", "branch", "--show-current"])
             current_branch = branch_result.stdout.strip()
             main_branch = self.config["general"]["main_branch"]
             logger.info(f"Current branch: {current_branch}")
-            print(f"{Colors.BLUE}Current branch: {current_branch}{Colors.ENDC}")
+            console.print(f"Current branch: [info]{current_branch}[/info]")
 
             if current_branch == main_branch:
                 logger.info(f"Already on {main_branch} branch; no processing needed.")
-                print(
-                    f"{Colors.WARNING}Already on {main_branch} branch. No branch processing needed.{Colors.ENDC}"
+                console.print(
+                    f"Already on {main_branch} branch. No branch processing needed.",
+                    style="warning",
                 )
                 return True
 
             status_result = self._run_command(["git", "status", "--porcelain"])
             if status_result.stdout.strip():
                 logger.info("Uncommitted changes detected; committing changes.")
-                print(f"{Colors.BLUE}Committing changes...{Colors.ENDC}")
+                console.print("Committing changes...", style="info")
                 commit_msg = f"Quality checks passed for branch {current_branch}"
                 self._run_command(["git", "add", "."])
                 commit_result = self._run_command(["git", "commit", "-m", commit_msg])
                 if commit_result.returncode != 0:
                     logger.error("Failed to commit changes.")
-                    print(
-                        f"{Colors.FAIL}Failed to commit changes: {commit_result.stderr}{Colors.ENDC}"
+                    console.print(
+                        f"Failed to commit changes: {commit_result.stderr}",
+                        style="error",
                     )
                     return False
                 logger.info("Changes committed successfully.")
-                print(f"{Colors.GREEN}Changes committed successfully.{Colors.ENDC}")
+                console.print("Changes committed successfully.", style="success")
             else:
                 logger.info("No changes to commit.")
-                print(f"{Colors.BLUE}No changes to commit.{Colors.ENDC}")
+                console.print("No changes to commit.", style="info")
 
             logger.info(f"Checking out main branch: {main_branch}")
-            print(f"{Colors.BLUE}Checking out {main_branch} branch...{Colors.ENDC}")
+            console.print(f"Checking out {main_branch} branch...", style="info")
             checkout_result = self._run_command(["git", "checkout", main_branch])
             if checkout_result.returncode != 0:
                 logger.error(f"Failed to checkout {main_branch}.")
-                print(
-                    f"{Colors.FAIL}Failed to checkout {main_branch}: {checkout_result.stderr}{Colors.ENDC}"
+                console.print(
+                    f"Failed to checkout {main_branch}: {checkout_result.stderr}",
+                    style="error",
                 )
                 return False
 
             logger.info(f"Merging {current_branch} into {main_branch}.")
-            print(
-                f"{Colors.BLUE}Merging {current_branch} into {main_branch}...{Colors.ENDC}"
+            console.print(
+                f"Merging {current_branch} into {main_branch}...", style="info"
             )
             merge_result = self._run_command(["git", "merge", current_branch])
             if merge_result.returncode != 0:
                 logger.error(f"Merge of {current_branch} failed.")
-                print(
-                    f"{Colors.FAIL}Failed to merge {current_branch}: {merge_result.stderr}{Colors.ENDC}"
+                console.print(
+                    f"Failed to merge {current_branch}: {merge_result.stderr}",
+                    style="error",
                 )
-                print(
-                    f"{Colors.BLUE}Aborting merge and returning to {current_branch}...{Colors.ENDC}"
+                console.print(
+                    f"Aborting merge and returning to {current_branch}...", style="info"
                 )
                 self._run_command(["git", "merge", "--abort"])
                 self._run_command(["git", "checkout", current_branch])
                 return False
 
             logger.info(f"Merge successful: {current_branch} into {main_branch}.")
-            print(
-                f"{Colors.GREEN}Successfully merged {current_branch} into {main_branch}.{Colors.ENDC}"
+            console.print(
+                f"Successfully merged {current_branch} into {main_branch}.",
+                style="success",
             )
             logger.info(f"Deleting branch {current_branch}.")
-            print(f"{Colors.BLUE}Deleting branch {current_branch}...{Colors.ENDC}")
+            console.print(f"Deleting branch {current_branch}...", style="info")
             delete_result = self._run_command(["git", "branch", "-d", current_branch])
             if delete_result.returncode != 0:
                 logger.warning(f"Could not delete branch {current_branch}.")
-                print(
-                    f"{Colors.WARNING}Could not delete branch {current_branch}: {delete_result.stderr}{Colors.ENDC}"
+                console.print(
+                    f"Could not delete branch {current_branch}: {delete_result.stderr}",
+                    style="warning",
                 )
             else:
                 logger.info(f"Branch {current_branch} deleted.")
-                print(f"{Colors.GREEN}Branch {current_branch} deleted.{Colors.ENDC}")
+                console.print(f"Branch {current_branch} deleted.", style="success")
             return True
         except Exception as e:
             logger.exception("Error during branch processing.")
-            print(f"{Colors.FAIL}Error during branch processing: {str(e)}{Colors.ENDC}")
+            console.print(f"Error during branch processing: {str(e)}", style="error")
             return False
 
 
