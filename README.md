@@ -81,10 +81,21 @@ You can save the quality check results as JSON for programmatic consumption by u
 code-quality . --json-output results.json
 ```
 
-The JSON file will contain a summary of the check results and detailed information for each check, in the following format:
+The JSON file will contain a comprehensive report including metadata, summary of check results, and structured detailed information for each check:
 
 ```json
 {
+  "metadata": {
+    "timestamp": "2025-03-11T10:23:01.123456",
+    "project_path": "/path/to/project",
+    "configuration": {
+      "src_dirs": "src",
+      "test_dir": "tests",
+      "min_test_coverage": "80"
+      // Additional configuration values...
+    },
+    "version": "1.0"
+  },
   "summary": {
     "passed": 2,
     "failed": 10,
@@ -96,19 +107,59 @@ The JSON file will contain a summary of the check results and detailed informati
     {
       "name": "Code Formatting (Black)",
       "status": "FAILED",
-      "details": "Files need formatting:\n..."
+      "raw_details": "Files need formatting:\n...",
+      "details": {
+        "summary": "Files need formatting",
+        "issues": [],
+        "files": ["src/file1.py", "src/file2.py"]
+      }
     },
     {
       "name": "Import Sorting (isort)",
       "status": "PASSED",
-      "details": "All imports are properly sorted."
+      "raw_details": "All imports are properly sorted.",
+      "details": {
+        "summary": "All imports are properly sorted.",
+        "issues": []
+      }
     },
-    // ... other checks
+    {
+      "name": "Type Checking (mypy)",
+      "status": "FAILED",
+      "raw_details": "Type checking issues found:\n...",
+      "details": {
+        "summary": "Type checking issues found:",
+        "issues": [
+          "src/file.py:10: error: Function is missing a return type annotation",
+          "src/file.py:20: error: Unexpected keyword argument"
+        ]
+      }
+    },
+    {
+      "name": "Test Coverage",
+      "status": "FAILED",
+      "raw_details": "Test coverage is 59%, which is below the minimum requirement of 80%.",
+      "details": {
+        "summary": "Test coverage is 59%, which is below the minimum requirement of 80%.",
+        "issues": [],
+        "coverage_percentage": 59.0
+      }
+    }
+    // Additional checks...
   ]
 }
 ```
 
-This JSON output can be used to integrate the quality checks with CI/CD pipelines, dashboards, or other automated systems.
+Features of the JSON output:
+
+1. **Metadata**: Includes timestamp, project path, and configuration used
+2. **Summary**: Overall counts and status
+3. **Detailed check results**:
+   - Both raw details (as displayed in the console) and structured information
+   - Check-specific parsed data (like files, issues, coverage percentages)
+   - Specific error messages and locations
+
+This structured JSON output can be used to integrate the quality checks with CI/CD pipelines, dashboards, or other automated systems.
 
 ## Development
 

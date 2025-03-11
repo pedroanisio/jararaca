@@ -473,6 +473,11 @@ def main(args: Optional[List[str]] = None) -> int:
         "--config", help="Path to a configuration file.", default=None
     )
     parser.add_argument(
+        "--auto-commit",
+        action="store_true",
+        help="Enable automatic commit and branch processing",
+    )
+    parser.add_argument(
         "--json-output", 
         help="Path to save results as JSON.", 
         default=None,
@@ -484,6 +489,12 @@ def main(args: Optional[List[str]] = None) -> int:
     try:
         # Initialize and run the pipeline
         pipeline = CodeQualityChainPipeline(parsed_args.project_path, parsed_args.config)
+        
+        # Update config if auto-commit is specified
+        if parsed_args.auto_commit:
+            pipeline.config["enable_auto_commit"] = "true"
+            logging.info("Auto-commit enabled via command line argument.")
+            
         success = pipeline.run()
         
         # Save JSON output if specified
