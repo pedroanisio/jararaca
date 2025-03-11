@@ -24,8 +24,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_initialization(self):
         """Test initializing the pipeline."""
-        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain, patch(
-            "src.code_quality.chain_pipeline.configparser.ConfigParser"
+        with patch("code_quality.chain_pipeline.CheckChain") as mock_chain, patch(
+            "code_quality.chain_pipeline.configparser.ConfigParser"
         ) as mock_config:
             # Create mock instances
             mock_chain_instance = MagicMock()
@@ -52,31 +52,31 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     def test_build_check_chain(self):
         """Test building the check chain."""
         with patch(
-            "src.code_quality.chain_pipeline.FormattingCheck"
+            "code_quality.chain_pipeline.FormattingCheck"
         ) as mock_formatting, patch(
-            "src.code_quality.chain_pipeline.ImportsCheck"
+            "code_quality.chain_pipeline.ImportsCheck"
         ) as mock_imports, patch(
-            "src.code_quality.chain_pipeline.LintingCheck"
+            "code_quality.chain_pipeline.LintingCheck"
         ) as mock_linting, patch(
-            "src.code_quality.chain_pipeline.RuffCheck"
+            "code_quality.chain_pipeline.RuffCheck"
         ) as mock_ruff, patch(
-            "src.code_quality.chain_pipeline.TypeCheckingLink"
+            "code_quality.chain_pipeline.TypeCheckingLink"
         ) as mock_type, patch(
-            "src.code_quality.chain_pipeline.SecurityCheckLink"
+            "code_quality.chain_pipeline.SecurityCheckLink"
         ) as mock_security, patch(
-            "src.code_quality.chain_pipeline.TestCoverageCheck"
+            "code_quality.chain_pipeline.TestCoverageCheck"
         ) as mock_coverage, patch(
-            "src.code_quality.chain_pipeline.NamingConventionsCheck"
+            "code_quality.chain_pipeline.NamingConventionsCheck"
         ) as mock_naming, patch(
-            "src.code_quality.chain_pipeline.FileLengthCheck"
+            "code_quality.chain_pipeline.FileLengthCheck"
         ) as mock_file_length, patch(
-            "src.code_quality.chain_pipeline.FunctionLengthCheck"
+            "code_quality.chain_pipeline.FunctionLengthCheck"
         ) as mock_func_length, patch(
-            "src.code_quality.chain_pipeline.DocstringCheck"
+            "code_quality.chain_pipeline.DocstringCheck"
         ) as mock_docstring, patch(
-            "src.code_quality.chain_pipeline.DependencyCheck"
+            "code_quality.chain_pipeline.DependencyCheck"
         ) as mock_dependency, patch(
-            "src.code_quality.chain_pipeline.CheckChain"
+            "code_quality.chain_pipeline.CheckChain"
         ) as mock_chain_class:
 
             # Create mock chain
@@ -134,11 +134,11 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     def test_run(self):
         """Test running the pipeline."""
         with patch(
-            "src.code_quality.chain_pipeline.CheckChain"
+            "code_quality.chain_pipeline.CheckChain"
         ) as mock_chain_class, patch(
-            "src.code_quality.chain_pipeline.Console"
+            "code_quality.chain_pipeline.Console"
         ) as mock_console_class, patch(
-            "src.code_quality.chain_pipeline.subprocess.run"
+            "code_quality.chain_pipeline.subprocess.run"
         ) as mock_subprocess_run:
 
             # Mock subprocess run for _check_prerequisites
@@ -193,9 +193,9 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     def test_print_summary(self):
         """Test printing the pipeline summary."""
         with patch(
-            "src.code_quality.chain_pipeline.create_summary_table"
+            "code_quality.chain_pipeline.create_summary_table"
         ) as mock_create_table, patch(
-            "src.code_quality.chain_pipeline.Console"
+            "code_quality.chain_pipeline.Console"
         ) as mock_console_class:
 
             # Create mock instances
@@ -231,8 +231,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
                     break
             self.assertTrue(failure_call_found)
 
-    @patch("src.code_quality.chain_pipeline.ArgumentParser")
-    @patch("src.code_quality.chain_pipeline.CodeQualityChainPipeline")
+    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
     def test_main_success(self, mock_pipeline_class, mock_arg_parser):
         """Test the main function with a successful run."""
         # Create mock instances
@@ -264,8 +264,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         # Check that the result is 0 (success)
         self.assertEqual(result, 0)
 
-    @patch("src.code_quality.chain_pipeline.ArgumentParser")
-    @patch("src.code_quality.chain_pipeline.CodeQualityChainPipeline")
+    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
     def test_main_failure(self, mock_pipeline_class, mock_arg_parser):
         """Test the main function with a failed run."""
         # Create mock instances
@@ -297,8 +297,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         # Check that the result is 1 (failure)
         self.assertEqual(result, 1)
 
-    @patch("src.code_quality.chain_pipeline.ArgumentParser")
-    @patch("src.code_quality.chain_pipeline.CodeQualityChainPipeline")
+    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
     def test_main_exception(self, mock_pipeline_class, mock_arg_parser):
         """Test the main function when an exception occurs."""
         # Create mock instances

@@ -25,7 +25,7 @@ class TestDependencyCheck(unittest.TestCase):
         """Tear down test fixtures."""
         self.temp_dir.cleanup()
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_no_requirements(self, mock_run_command):
         """Test the dependency check when no requirements files are found."""
         # Create an empty project directory
@@ -43,7 +43,7 @@ class TestDependencyCheck(unittest.TestCase):
         # Verify that run_command was not called
         mock_run_command.assert_not_called()
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_up_to_date(self, mock_run_command):
         """Test the dependency check when all dependencies are up-to-date."""
         # Create a project directory with a requirements.txt file
@@ -78,7 +78,7 @@ flake8==4.0.1
             ["pip", "list", "--outdated", "--format=json"]
         )
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_outdated(self, mock_run_command):
         """Test the dependency check when some dependencies are outdated."""
         # Create a project directory with a requirements.txt file
@@ -129,7 +129,7 @@ flake8==3.9.2
             ["pip", "list", "--outdated", "--format=json"]
         )
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_different_formats(self, mock_run_command):
         """Test the dependency check with various requirement formats."""
         # Create a project directory with a requirements.txt file using different formats
@@ -185,7 +185,7 @@ requests       # No version specified
         # Note: requests without a version specifier is not checked by the implementation
         # so we don't assert for it
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_multiple_files(self, mock_run_command):
         """Test the dependency check with multiple requirements files."""
         # Create a project directory with multiple requirements files
@@ -244,7 +244,7 @@ mypy==0.910
         self.assertIn("requirements.txt", results[0].details)
         self.assertIn("dev-requirements.txt", results[0].details)
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_command_failure(self, mock_run_command):
         """Test the dependency check when the pip command fails."""
         # Create a project directory with a requirements.txt file
@@ -270,7 +270,7 @@ mypy==0.910
         self.assertIn("Failed to check for outdated packages", results[0].details)
         self.assertIn("Could not determine the latest version", results[0].details)
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_invalid_json(self, mock_run_command):
         """Test the dependency check when pip returns invalid JSON."""
         # Create a project directory with a requirements.txt file
@@ -294,7 +294,7 @@ mypy==0.910
         self.assertIn("Failed to parse pip output", results[0].details)
         self.assertIn("Not a valid JSON output", results[0].details)
 
-    @patch("src.code_quality.links.dependency.run_command")
+    @patch("code_quality.links.dependency.run_command")
     def test_check_dependency_file_error(self, mock_run_command):
         """Test the dependency check when there's an error reading a requirements file."""
         # Create a project directory with a requirements.txt file

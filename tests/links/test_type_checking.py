@@ -62,7 +62,7 @@ class Person:
             )
 
         # Mock the run_command function to return a successful result
-        with patch("src.code_quality.links.type_checking.run_command") as mock_run:
+        with patch("code_quality.links.type_checking.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=0,
                 stdout="Success: no issues found in 1 source file",
@@ -110,7 +110,7 @@ process_list("not a list")  # Type error: Argument has incompatible type
             )
 
         # Mock the run_command function to return a result with type errors
-        with patch("src.code_quality.links.type_checking.run_command") as mock_run:
+        with patch("code_quality.links.type_checking.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=1,
                 stdout=(
@@ -156,7 +156,7 @@ def function_with_syntax_error():
             )
 
         # Mock the run_command function to return a result with syntax errors
-        with patch("src.code_quality.links.type_checking.run_command") as mock_run:
+        with patch("code_quality.links.type_checking.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=1,
                 stdout="",
@@ -214,7 +214,7 @@ class TestModule(unittest.TestCase):
             )
 
         # Mock the run_command function to return a successful result
-        with patch("src.code_quality.links.type_checking.run_command") as mock_run:
+        with patch("code_quality.links.type_checking.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=0,
                 stdout="Success: no issues found in 2 source files",

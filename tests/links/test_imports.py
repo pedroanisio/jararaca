@@ -24,7 +24,7 @@ class TestImportsCheck(unittest.TestCase):
         """Tear down test fixtures."""
         self.temp_dir.cleanup()
 
-    @patch("src.code_quality.links.imports.run_command")
+    @patch("code_quality.links.imports.run_command")
     def test_check_imports_success(self, mock_run_command):
         """Test the imports check when all imports are properly sorted."""
         # Setup the mock to return a passing check
@@ -46,7 +46,7 @@ class TestImportsCheck(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.PASSED)
         self.assertEqual(results[0].details, "All imports are properly sorted.")
 
-    @patch("src.code_quality.links.imports.run_command")
+    @patch("code_quality.links.imports.run_command")
     def test_check_imports_failure(self, mock_run_command):
         """Test the imports check when imports need sorting."""
         # Setup the mock to return a failing check
@@ -72,7 +72,7 @@ class TestImportsCheck(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.FAILED)
         self.assertIn("incorrectly sorted", results[0].details)
 
-    @patch("src.code_quality.links.imports.run_command")
+    @patch("code_quality.links.imports.run_command")
     def test_check_imports_with_errors(self, mock_run_command):
         """Test the imports check when isort encounters errors."""
         # Setup the mock to return an error
@@ -94,7 +94,7 @@ class TestImportsCheck(unittest.TestCase):
         self.assertIn("incorrectly sorted", results[0].details)
         self.assertIn("Error processing file", results[0].details)
 
-    @patch("src.code_quality.links.imports.run_command")
+    @patch("code_quality.links.imports.run_command")
     def test_check_imports_with_multiple_dirs(self, mock_run_command):
         """Test the imports check with multiple source directories."""
         # Setup the mock to return a passing check

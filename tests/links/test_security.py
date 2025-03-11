@@ -24,7 +24,7 @@ class TestSecurityCheckLink(unittest.TestCase):
         """Tear down test fixtures."""
         self.temp_dir.cleanup()
 
-    @patch("src.code_quality.links.security.run_command")
+    @patch("code_quality.links.security.run_command")
     def test_check_security_success(self, mock_run_command):
         """Test the security check when no security issues are found."""
         # Setup the mock to return a passing check
@@ -48,7 +48,7 @@ class TestSecurityCheckLink(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.PASSED)
         self.assertEqual(results[0].details, "No security issues found.")
 
-    @patch("src.code_quality.links.security.run_command")
+    @patch("code_quality.links.security.run_command")
     def test_check_security_with_issues(self, mock_run_command):
         """Test the security check when security issues are found."""
         # Setup the mock to return a failing check
@@ -76,7 +76,7 @@ class TestSecurityCheckLink(unittest.TestCase):
         self.assertIn("Security issues found", results[0].details)
         self.assertIn("subprocess_popen_with_shell_equals_true", results[0].details)
 
-    @patch("src.code_quality.links.security.run_command")
+    @patch("code_quality.links.security.run_command")
     def test_check_security_with_errors(self, mock_run_command):
         """Test the security check when bandit encounters errors."""
         # Setup the mock to return a failing check with stderr
@@ -98,7 +98,7 @@ class TestSecurityCheckLink(unittest.TestCase):
         self.assertIn("Security issues found", results[0].details)
         self.assertIn("Cannot process file", results[0].details)
 
-    @patch("src.code_quality.links.security.run_command")
+    @patch("code_quality.links.security.run_command")
     def test_check_security_with_multiple_dirs(self, mock_run_command):
         """Test the security check with multiple source directories."""
         # Setup the mock to return a passing check

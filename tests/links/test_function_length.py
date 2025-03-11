@@ -255,7 +255,7 @@ def function_with_syntax_error():
 
         # Patch the CheckResult constructor to handle the 'message' parameter
         with patch(
-            "src.code_quality.links.function_length.CheckResult"
+            "code_quality.links.function_length.CheckResult"
         ) as mock_check_result:
             # Create a mock CheckResult instance
             mock_result = MagicMock()
