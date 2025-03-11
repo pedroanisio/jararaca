@@ -31,7 +31,7 @@ def main():
 
     # Clean up any legacy --use-chain flags which are no longer needed
     args = [arg for arg in args if arg != "--use-chain"]
-    
+
     # Call the chain-based implementation
     return chain_main(args)
 

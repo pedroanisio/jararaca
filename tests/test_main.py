@@ -65,9 +65,7 @@ class TestMain(unittest.TestCase):
         result = main()
 
         # Verify the pipeline was created with the config file
-        mock_pipeline_class.assert_called_once_with(
-            "/fake/path", "/fake/config.ini"
-        )
+        mock_pipeline_class.assert_called_once_with("/fake/path", "/fake/config.ini")
 
         # Verify the correct exit code was returned
         self.assertEqual(result, 0)
