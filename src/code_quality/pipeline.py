@@ -285,7 +285,13 @@ class CodeQualityPipeline:
     def _check_linting(self) -> None:
         """Check code linting with Flake8 and Ruff (if enabled)."""
         try:
-            result = self._run_command(["flake8"])
+            # Add exclusions for common directories and files that should be ignored
+            result = self._run_command(
+                [
+                    "flake8",
+                    "--exclude=venv,env,.venv,.env,.git,__pycache__,build,dist,*.egg-info",
+                ]
+            )
             if result.returncode == 0:
                 self.results.append(
                     CheckResult(
@@ -294,14 +300,54 @@ class CodeQualityPipeline:
                         "No linting issues found.",
                     )
                 )
+                print_rich_result(
+                    "Code Linting (Flake8)",
+                    CheckStatus.PASSED.value,
+                    "No linting issues found.",
+                )
                 logger.info("Flake8 linting passed.")
             else:
+                # Parse flake8 output and format it better
+                flake8_issues = []
+                for line in result.stdout.strip().split("\n"):
+                    if line:
+                        try:
+                            parts = line.split(":", 3)
+                            if len(parts) >= 4:
+                                file_path, line_num, col, error = parts
+                                flake8_issues.append(
+                                    f"[yellow]{file_path}[/yellow]:[bold]{line_num}:{col}[/bold] - {error.strip()}"
+                                )
+                        except Exception:
+                            flake8_issues.append(line)
+
+                detailed_msg = "[bold red]Flake8 linting issues found[/bold red]\n\n"
+                if flake8_issues:
+                    detailed_msg += "\n".join(flake8_issues) + "\n\n"
+                else:
+                    detailed_msg += result.stdout + "\n\n"
+
+                detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
+                detailed_msg += (
+                    "- Run 'flake8 --fix' to automatically fix some issues\n"
+                )
+                detailed_msg += (
+                    "- E*** errors are style issues (indentation, whitespace)\n"
+                )
+                detailed_msg += (
+                    "- F*** errors are logical issues (unused imports, variables)\n"
+                )
+                detailed_msg += "- W*** errors are warnings (deprecated features, etc.)"
+
                 self.results.append(
                     CheckResult(
                         "Code Linting (Flake8)",
                         CheckStatus.FAILED,
                         f"Linting issues found:\n{result.stdout}",
                     )
+                )
+                print_rich_result(
+                    "Code Linting (Flake8)", CheckStatus.FAILED.value, detailed_msg
                 )
                 logger.error("Flake8 linting failed.")
         except Exception as e:
@@ -312,12 +358,26 @@ class CodeQualityPipeline:
                     f"Error running Flake8: {str(e)}",
                 )
             )
+            print_rich_result(
+                "Code Linting (Flake8)",
+                CheckStatus.FAILED.value,
+                f"[bold red]Error running Flake8:[/bold red] {str(e)}\n\n"
+                f"[bold cyan]How to fix:[/bold cyan] Make sure Flake8 is installed correctly.",
+            )
             logger.exception("Error running Flake8.")
 
         # Ruff check if enabled
-        if self.config.getboolean("general", "check_ruff"):
+        if self.config.getboolean("general", "check_ruff", fallback=True):
             try:
-                result = self._run_command(["ruff", "check", "."])
+                # Add exclusions for common directories and files that should be ignored
+                result = self._run_command(
+                    [
+                        "ruff",
+                        "check",
+                        ".",
+                        "--exclude=venv,env,.venv,.env,.git,__pycache__,build,dist,*.egg-info",
+                    ]
+                )
                 if result.returncode == 0:
                     self.results.append(
                         CheckResult(
@@ -326,14 +386,51 @@ class CodeQualityPipeline:
                             "No linting issues found with Ruff.",
                         )
                     )
+                    print_rich_result(
+                        "Code Linting (Ruff)",
+                        CheckStatus.PASSED.value,
+                        "No linting issues found with Ruff.",
+                    )
                     logger.info("Ruff linting passed.")
                 else:
+                    # Parse and format Ruff output
+                    ruff_issues = []
+                    for line in result.stdout.strip().split("\n"):
+                        if line and not line.startswith("Found") and ":" in line:
+                            try:
+                                file_info, error_msg = line.split("  ", 1)
+                                ruff_issues.append(
+                                    f"[yellow]{file_info.strip()}[/yellow] - {error_msg.strip()}"
+                                )
+                            except Exception:
+                                ruff_issues.append(line)
+
+                    detailed_msg = "[bold red]Ruff linting issues found[/bold red]\n\n"
+                    if ruff_issues:
+                        detailed_msg += "\n".join(ruff_issues) + "\n\n"
+                    else:
+                        detailed_msg += result.stdout + "\n\n"
+
+                    detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
+                    detailed_msg += (
+                        "- Run 'ruff check --fix .' to automatically fix many issues\n"
+                    )
+                    detailed_msg += (
+                        "- Ruff is a fast linter that can replace Flake8 and others\n"
+                    )
+                    detailed_msg += (
+                        "- See https://docs.astral.sh/ruff/ for more details"
+                    )
+
                     self.results.append(
                         CheckResult(
                             "Code Linting (Ruff)",
                             CheckStatus.FAILED,
                             f"Ruff found issues:\n{result.stdout}",
                         )
+                    )
+                    print_rich_result(
+                        "Code Linting (Ruff)", CheckStatus.FAILED.value, detailed_msg
                     )
                     logger.error("Ruff linting failed.")
             except FileNotFoundError:
@@ -344,6 +441,11 @@ class CodeQualityPipeline:
                         "Ruff not installed or not found.",
                     )
                 )
+                print_rich_result(
+                    "Code Linting (Ruff)",
+                    CheckStatus.SKIPPED.value,
+                    "Ruff not installed or not found.",
+                )
                 logger.warning("Ruff not installed; skipping Ruff linting.")
             except Exception as e:
                 self.results.append(
@@ -352,6 +454,12 @@ class CodeQualityPipeline:
                         CheckStatus.FAILED,
                         f"Error running Ruff: {str(e)}",
                     )
+                )
+                print_rich_result(
+                    "Code Linting (Ruff)",
+                    CheckStatus.FAILED.value,
+                    f"[bold red]Error running Ruff:[/bold red] {str(e)}\n\n"
+                    f"[bold cyan]How to fix:[/bold cyan] Make sure Ruff is installed correctly.",
                 )
                 logger.exception("Error running Ruff.")
 
@@ -364,6 +472,11 @@ class CodeQualityPipeline:
                     CheckStatus.SKIPPED,
                     "Mypy check disabled in configuration.",
                 )
+            )
+            print_rich_result(
+                "Static Type Checking (mypy)",
+                CheckStatus.SKIPPED.value,
+                "Mypy check disabled in configuration.",
             )
             logger.info("Mypy check disabled by configuration.")
             return
@@ -384,21 +497,79 @@ class CodeQualityPipeline:
                 if result.returncode == 0:
                     self.results.append(
                         CheckResult(
-                            f"Static Type Checking (mypy: {src_dir})",
+                            "Static Type Checking (mypy)",
                             CheckStatus.PASSED,
-                            f"No type issues in {src_dir}.",
+                            f"No type errors found in {src_dir}.",
                         )
+                    )
+                    print_rich_result(
+                        "Static Type Checking (mypy)",
+                        CheckStatus.PASSED.value,
+                        f"No type errors found in {src_dir}.",
                     )
                     logger.info(f"Mypy check passed for {src_dir}.")
                 else:
+                    # Parse mypy output and format it better
+                    mypy_issues = []
+                    for line in result.stdout.strip().split("\n"):
+                        if ":" in line:
+                            try:
+                                file_info, error_msg = (
+                                    line.split(":", 3)[0:2],
+                                    line.split(":", 3)[2:],
+                                )
+                                file_path, line_num = file_info
+                                mypy_issues.append(
+                                    f"[yellow]{file_path}[/yellow]:[bold]{line_num}[/bold] - {':'.join(error_msg).strip()}"
+                                )
+                            except Exception:
+                                mypy_issues.append(line)
+
+                    detailed_msg = (
+                        f"[bold red]Type errors found in {src_dir}[/bold red]\n\n"
+                    )
+                    if mypy_issues:
+                        detailed_msg += "\n".join(mypy_issues) + "\n\n"
+                    else:
+                        detailed_msg += result.stdout + "\n\n"
+
+                    detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
+                    detailed_msg += "- Add proper type annotations to your functions and variables\n"
+                    detailed_msg += "- Use Optional[] for variables that can be None\n"
+                    detailed_msg += (
+                        "- Add # type: ignore comments for legitimate exceptions\n"
+                    )
+                    detailed_msg += (
+                        "- See https://mypy.readthedocs.io/ for more information"
+                    )
+
                     self.results.append(
                         CheckResult(
-                            f"Static Type Checking (mypy: {src_dir})",
+                            "Static Type Checking (mypy)",
                             CheckStatus.FAILED,
-                            f"Type issues in {src_dir}:\n{result.stdout}",
+                            f"Type errors found in {src_dir}:\n{result.stdout}",
                         )
                     )
+                    print_rich_result(
+                        "Static Type Checking (mypy)",
+                        CheckStatus.FAILED.value,
+                        detailed_msg,
+                    )
                     logger.error(f"Mypy check failed for {src_dir}.")
+            except FileNotFoundError:
+                self.results.append(
+                    CheckResult(
+                        "Static Type Checking (mypy)",
+                        CheckStatus.SKIPPED,
+                        "Mypy not installed or not found.",
+                    )
+                )
+                print_rich_result(
+                    "Static Type Checking (mypy)",
+                    CheckStatus.SKIPPED.value,
+                    "Mypy not installed or not found.",
+                )
+                logger.warning("Mypy not installed; skipping type checking.")
             except Exception as e:
                 self.results.append(
                     CheckResult(
@@ -407,19 +578,30 @@ class CodeQualityPipeline:
                         f"Error running mypy: {str(e)}",
                     )
                 )
-                logger.exception("Error running mypy.")
+                print_rich_result(
+                    "Static Type Checking (mypy)",
+                    CheckStatus.FAILED.value,
+                    f"[bold red]Error running mypy:[/bold red] {str(e)}\n\n"
+                    f"[bold cyan]How to fix:[/bold cyan] Make sure mypy is installed correctly.",
+                )
+                logger.exception(f"Error running mypy on {src_dir}.")
 
     def _check_security(self) -> None:
-        """Check security issues with Bandit."""
+        """Check code security with Bandit."""
         if not self.config.getboolean("general", "check_bandit"):
             self.results.append(
                 CheckResult(
-                    "Security Scanning (Bandit)",
+                    "Security Check (Bandit)",
                     CheckStatus.SKIPPED,
-                    "Bandit check disabled in configuration.",
+                    "Security check disabled in configuration.",
                 )
             )
-            logger.info("Bandit check disabled by configuration.")
+            print_rich_result(
+                "Security Check (Bandit)",
+                CheckStatus.SKIPPED.value,
+                "Security check disabled in configuration.",
+            )
+            logger.info("Security check disabled by configuration.")
             return
 
         src_dirs = [d.strip() for d in self.config["paths"]["src_dirs"].split(",")]
@@ -429,48 +611,92 @@ class CodeQualityPipeline:
                 logger.info(f"Source directory not found for Bandit: {src_dir}")
                 continue
             try:
-                result = subprocess.run(
-                    ["bandit", "-r", src_dir],
-                    cwd=self.project_path,
-                    capture_output=True,
-                    text=True,
-                )
+                result = self._run_command(["bandit", "-r", src_dir])
                 if result.returncode == 0:
                     self.results.append(
                         CheckResult(
-                            f"Security Scanning (Bandit: {src_dir})",
+                            "Security Check (Bandit)",
                             CheckStatus.PASSED,
-                            f"No security issues in {src_dir}.",
+                            f"No security issues found in {src_dir}.",
                         )
                     )
-                    logger.info(f"Bandit check passed for {src_dir}.")
+                    print_rich_result(
+                        "Security Check (Bandit)",
+                        CheckStatus.PASSED.value,
+                        f"No security issues found in {src_dir}.",
+                    )
+                    logger.info(f"Bandit security check passed for {src_dir}.")
                 else:
+                    # Parse bandit output and format it better
+                    bandit_issues = []
+                    for line in result.stdout.strip().split("\n"):
+                        if line.startswith(">>") and ":" in line:
+                            try:
+                                bandit_issues.append(f"[yellow]{line.strip()}[/yellow]")
+                            except Exception:
+                                bandit_issues.append(line)
+
+                    detailed_msg = (
+                        f"[bold red]Security issues found in {src_dir}[/bold red]\n\n"
+                    )
+                    if bandit_issues:
+                        detailed_msg += "\n".join(bandit_issues) + "\n\n"
+                    else:
+                        detailed_msg += result.stdout + "\n\n"
+
+                    detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
+                    detailed_msg += (
+                        "- Review the security issues identified and fix them\n"
+                    )
+                    detailed_msg += (
+                        "- Issues are categorized by severity (Low/Medium/High)\n"
+                    )
+                    detailed_msg += (
+                        "- See https://bandit.readthedocs.io/ for more details"
+                    )
+
                     self.results.append(
                         CheckResult(
-                            f"Security Scanning (Bandit: {src_dir})",
+                            "Security Check (Bandit)",
                             CheckStatus.FAILED,
-                            f"Security issues in {src_dir}:\n{result.stdout}",
+                            f"Security issues found in {src_dir}:\n{result.stdout}",
                         )
                     )
-                    logger.error(f"Bandit check failed for {src_dir}.")
+                    print_rich_result(
+                        "Security Check (Bandit)",
+                        CheckStatus.FAILED.value,
+                        detailed_msg,
+                    )
+                    logger.error(f"Bandit security check failed for {src_dir}.")
             except FileNotFoundError:
                 self.results.append(
                     CheckResult(
-                        "Security Scanning (Bandit)",
+                        "Security Check (Bandit)",
                         CheckStatus.SKIPPED,
                         "Bandit not installed or not found.",
                     )
                 )
-                logger.warning("Bandit not installed; skipping Bandit check.")
+                print_rich_result(
+                    "Security Check (Bandit)",
+                    CheckStatus.SKIPPED.value,
+                    "Bandit not installed or not found.",
+                )
+                logger.warning("Bandit not installed; skipping security check.")
             except Exception as e:
                 self.results.append(
                     CheckResult(
-                        "Security Scanning (Bandit)",
+                        "Security Check (Bandit)",
                         CheckStatus.FAILED,
                         f"Error running Bandit: {str(e)}",
                     )
                 )
-                logger.exception("Error running Bandit.")
+                print_rich_result(
+                    "Security Check (Bandit)",
+                    CheckStatus.FAILED.value,
+                    f"[bold red]Error running Bandit:[/bold red] {str(e)}\n\n"
+                    f"[bold cyan]How to fix:[/bold cyan] Make sure Bandit is installed correctly.",
+                )
+                logger.exception(f"Error running Bandit on {src_dir}.")
 
     def _check_tests(self) -> None:
         """Run unit tests and check coverage."""
@@ -570,11 +796,15 @@ class CodeQualityPipeline:
                                     )
 
                     detailed_msg = (
-                        f"[bold red]Coverage: {coverage_pct}% below minimum {min_coverage}%[/bold red]\n\n"
-                        f"[bold]Files needing more test coverage:[/bold]\n"
+                        "[bold red]Coverage: "
+                        + str(coverage_pct)
+                        + "% below minimum "
+                        + str(min_coverage)
+                        + "%[/bold red]\n\n"
+                        "[bold]Files needing more test coverage:[/bold]\n"
                         + "\n".join(missing_coverage)
                         + "\n\n"
-                        f"[bold cyan]How to fix:[/bold cyan] Add more unit tests for the files listed above, focusing on the missing lines."
+                        "[bold cyan]How to fix:[/bold cyan] Add more unit tests for the files listed above, focusing on the missing lines."
                     )
 
                     self.results.append(
@@ -644,46 +874,90 @@ class CodeQualityPipeline:
         file_violations = []
         class_violations = []
         func_violations = []
-        
+
         # Python keywords that shouldn't be considered violations
-        python_keywords = ['as', 'assert', 'break', 'class', 'continue', 'def', 'del', 'elif', 
-                          'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 
-                          'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 
-                          'return', 'try', 'while', 'with', 'yield', 'methods']
+        python_keywords = [
+            "as",
+            "assert",
+            "break",
+            "class",
+            "continue",
+            "def",
+            "del",
+            "elif",
+            "else",
+            "except",
+            "finally",
+            "for",
+            "from",
+            "global",
+            "if",
+            "import",
+            "in",
+            "is",
+            "lambda",
+            "nonlocal",
+            "not",
+            "or",
+            "pass",
+            "raise",
+            "return",
+            "try",
+            "while",
+            "with",
+            "yield",
+            "methods",
+        ]
 
         for file_path in self._get_python_files():
             file_name = os.path.basename(file_path)
             # Skip checking special files like __init__.py and __main__.py
-            if not file_name.startswith("__") and not re.match(r"^[a-z][a-z0-9_]*\.py$", file_name):
+            if not file_name.startswith("__") and not re.match(
+                r"^[a-z][a-z0-9_]*\.py$", file_name
+            ):
                 file_violations.append(
-                    f"[yellow]{file_path}[/yellow]: File should be in snake_case"
+                    "[yellow]" + file_path + "[/yellow]: File should be in snake_case"
                 )
                 violations.append(f"File '{file_path}' should be in snake_case.")
             try:
                 with open(file_path, "r") as f:
                     content = f.read()
                     # Find class definitions using more precise regex
-                    for match in re.finditer(r"class\s+([A-Za-z0-9_]+)(?:\s*\(|\s*:)", content):
+                    for match in re.finditer(
+                        r"class\s+([A-Za-z0-9_]+)(?:\s*\(|\s*:)", content
+                    ):
                         cls = match.group(1)
                         # Skip Python keywords and check if class follows PascalCase
-                        if cls not in python_keywords and not re.match(r"^[A-Z][A-Za-z0-9]*$", cls):
+                        if cls not in python_keywords and not re.match(
+                            r"^[A-Z][A-Za-z0-9]*$", cls
+                        ):
                             class_violations.append(
-                                f"[yellow]{file_path}[/yellow]: Class [red]{cls}[/red] should be in PascalCase"
+                                "[yellow]"
+                                + file_path
+                                + "[/yellow]: Class [red]"
+                                + cls
+                                + "[/red] should be in PascalCase"
                             )
                             violations.append(
                                 f"Class '{cls}' in '{file_path}' should be in PascalCase."
                             )
-                    
+
                     # Find function definitions using more precise regex
                     for match in re.finditer(r"def\s+([A-Za-z0-9_]+)\s*\(", content):
                         func = match.group(1)
                         # Skip Python keywords, special methods (__xxx__), and private methods (_xxx)
-                        if (func not in python_keywords and 
-                            not (func.startswith("__") and func.endswith("__")) and 
-                            not func.startswith("_") and 
-                            not re.match(r"^[a-z][a-z0-9_]*$", func)):
+                        if (
+                            func not in python_keywords
+                            and not (func.startswith("__") and func.endswith("__"))
+                            and not func.startswith("_")
+                            and not re.match(r"^[a-z][a-z0-9_]*$", func)
+                        ):
                             func_violations.append(
-                                f"[yellow]{file_path}[/yellow]: Function [red]{func}[/red] should be in snake_case"
+                                "[yellow]"
+                                + file_path
+                                + "[/yellow]: Function [red]"
+                                + func
+                                + "[/red] should be in snake_case"
                             )
                             violations.append(
                                 f"Function '{func}' in '{file_path}' should be in snake_case."
@@ -691,39 +965,41 @@ class CodeQualityPipeline:
             except Exception as e:
                 violations.append(f"Error checking naming in '{file_path}': {str(e)}")
                 logger.exception(f"Error checking naming conventions in {file_path}")
-        
+
         if violations:
-            # Build detailed message with sections
+            # Build detailed message with sections - Avoiding f-strings with markup
             detailed_msg = "[bold red]Naming convention violations found[/bold red]\n\n"
-            
+
             if file_violations:
                 detailed_msg += "[bold]File naming violations:[/bold]\n"
                 detailed_msg += "\n".join(file_violations) + "\n\n"
-            
+
             if class_violations:
                 detailed_msg += "[bold]Class naming violations:[/bold]\n"
                 detailed_msg += "\n".join(class_violations) + "\n\n"
-            
+
             if func_violations:
                 detailed_msg += "[bold]Function naming violations:[/bold]\n"
                 detailed_msg += "\n".join(func_violations) + "\n\n"
-            
+
             detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
-            detailed_msg += "- Files should be in snake_case (lowercase with underscores)\n"
+            detailed_msg += (
+                "- Files should be in snake_case (lowercase with underscores)\n"
+            )
             detailed_msg += "- Classes should be in PascalCase (capitalized words without underscores)\n"
-            detailed_msg += "- Functions should be in snake_case (lowercase with underscores)\n"
-            detailed_msg += "[italic]Note: Special method names (__init__), private methods (_method), " 
+            detailed_msg += (
+                "- Functions should be in snake_case (lowercase with underscores)\n"
+            )
+            detailed_msg += "[italic]Note: Special method names (__init__), private methods (_method), "
             detailed_msg += "and special files (__init__.py) follow Python conventions and are exempted.[/italic]"
-            
+
             self.results.append(
                 CheckResult(
                     "Naming Conventions", CheckStatus.FAILED, "\n".join(violations)
                 )
             )
             print_rich_result(
-                "Naming Conventions",
-                CheckStatus.FAILED.value,
-                detailed_msg
+                "Naming Conventions", CheckStatus.FAILED.value, detailed_msg
             )
             logger.error("Naming convention violations found.")
         else:
@@ -737,7 +1013,7 @@ class CodeQualityPipeline:
             print_rich_result(
                 "Naming Conventions",
                 CheckStatus.PASSED.value,
-                "All naming conventions are followed."
+                "All naming conventions are followed.",
             )
             logger.info("Naming conventions check passed.")
 
@@ -758,7 +1034,14 @@ class CodeQualityPipeline:
                             f"File '{file_path}' has {num_lines} lines (max {max_length})."
                         )
                         detailed_violations.append(
-                            f"[yellow]{file_path}[/yellow]: [red]{num_lines}[/red] lines (exceeds max of {max_length} by {percent_over:.1f}%)"
+                            "[yellow]"
+                            + file_path
+                            + "[/yellow]: [red]"
+                            + str(num_lines)
+                            + "[/red] lines (exceeds max of "
+                            + str(max_length)
+                            + " by "
+                            + f"{percent_over:.1f}%)"
                         )
             except Exception as e:
                 violations.append(f"Error checking length of '{file_path}': {str(e)}")
@@ -766,14 +1049,16 @@ class CodeQualityPipeline:
 
         if violations:
             detailed_msg = (
-                f"[bold red]File length violations found[/bold red]\n\n"
-                f"[bold]Files exceeding maximum length ({max_length} lines):[/bold]\n"
+                "[bold red]File length violations found[/bold red]\n\n"
+                + "[bold]Files exceeding maximum length ("
+                + str(max_length)
+                + " lines):[/bold]\n"
                 + "\n".join(detailed_violations)
                 + "\n\n"
-                f"[bold cyan]How to fix:[/bold cyan]\n"
-                f"- Consider breaking large files into smaller, focused modules\n"
-                f"- Move related helper functions to a separate utility file\n"
-                f"- Review and refactor long files to improve code organization"
+                + "[bold cyan]How to fix:[/bold cyan]\n"
+                + "- Consider breaking large files into smaller, focused modules\n"
+                + "- Move related helper functions to a separate utility file\n"
+                + "- Review and refactor long files to improve code organization"
             )
 
             self.results.append(
@@ -800,7 +1085,6 @@ class CodeQualityPipeline:
         """Ensure no function exceeds the maximum allowed length."""
         max_length = self.config.getint("general", "max_function_length")
         violations = []
-        detailed_violations = []
         functions_by_file = {}
 
         for file_path in self._get_python_files():
@@ -836,7 +1120,14 @@ class CodeQualityPipeline:
                                 percent_over = (
                                     (function_lines - max_length) / max_length
                                 ) * 100
-                                detailed_violation = f"[red]{current_function}[/red]: {function_lines} lines (exceeds max by {percent_over:.1f}%)"
+                                detailed_violation = (
+                                    "[red]"
+                                    + current_function
+                                    + "[/red]: "
+                                    + str(function_lines)
+                                    + " lines (exceeds max by "
+                                    + f"{percent_over:.1f}%)"
+                                )
 
                                 if file_path not in functions_by_file:
                                     functions_by_file[file_path] = []
@@ -849,7 +1140,14 @@ class CodeQualityPipeline:
                     )
 
                     percent_over = ((function_lines - max_length) / max_length) * 100
-                    detailed_violation = f"[red]{current_function}[/red]: {function_lines} lines (exceeds max by {percent_over:.1f}%)"
+                    detailed_violation = (
+                        "[red]"
+                        + current_function
+                        + "[/red]: "
+                        + str(function_lines)
+                        + " lines (exceeds max by "
+                        + f"{percent_over:.1f}%)"
+                    )
 
                     if file_path not in functions_by_file:
                         functions_by_file[file_path] = []
@@ -862,19 +1160,23 @@ class CodeQualityPipeline:
                 logger.exception(f"Error checking function length for {file_path}")
 
         if violations:
-            # Organize detailed message by file
-            detailed_msg = f"[bold red]Function length violations found[/bold red]\n\n"
+            # Organize detailed message by file - avoiding f-strings with markup
+            detailed_msg = "[bold red]Function length violations found[/bold red]\n\n"
 
             for file_path, funcs in functions_by_file.items():
                 file_name = os.path.basename(file_path)
                 detailed_msg += (
-                    f"[bold yellow]{file_name}[/bold yellow] ({file_path}):\n"
+                    "[bold yellow]"
+                    + file_name
+                    + "[/bold yellow] ("
+                    + file_path
+                    + "):\n"
                 )
                 for func in funcs:
-                    detailed_msg += f"  • {func}\n"
+                    detailed_msg += "  • " + func + "\n"
                 detailed_msg += "\n"
 
-            detailed_msg += f"[bold cyan]How to fix:[/bold cyan]\n"
+            detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
             detailed_msg += (
                 "- Break large functions into smaller, focused helper functions\n"
             )
@@ -882,7 +1184,11 @@ class CodeQualityPipeline:
             detailed_msg += (
                 "- Consider using class methods to organize related functionality\n"
             )
-            detailed_msg += f"- Functions should ideally be less than {max_length} lines for better readability"
+            detailed_msg += (
+                "- Functions should ideally be less than "
+                + str(max_length)
+                + " lines for better readability"
+            )
 
             self.results.append(
                 CheckResult(
@@ -943,6 +1249,16 @@ class CodeQualityPipeline:
                 CheckResult("Docstrings", CheckStatus.FAILED, "\n".join(violations))
             )
             logger.error("Docstring violations found.")
+
+            # Add rich output for failed docstring check
+            detailed_msg = (
+                "[bold red]Docstring violations found[/bold red]\n\n"
+                "[bold]Missing docstrings:[/bold]\n"
+                + "\n".join([f"[yellow]{v}[/yellow]" for v in violations])
+                + "\n\n"
+                "[bold cyan]How to fix:[/bold cyan] Add descriptive docstrings to all classes and functions."
+            )
+            print_rich_result("Docstrings", CheckStatus.FAILED.value, detailed_msg)
         else:
             self.results.append(
                 CheckResult(
@@ -950,6 +1266,11 @@ class CodeQualityPipeline:
                     CheckStatus.PASSED,
                     "All classes and functions have proper docstrings.",
                 )
+            )
+            print_rich_result(
+                "Docstrings",
+                CheckStatus.PASSED.value,
+                "All classes and functions have proper docstrings.",
             )
             logger.info("Docstring check passed.")
 
@@ -978,6 +1299,14 @@ class CodeQualityPipeline:
                     "No dependency management files found.",
                 )
             )
+            print_rich_result(
+                "Dependency Management",
+                CheckStatus.FAILED.value,
+                "[bold red]No dependency management files found[/bold red]\n\n"
+                "[bold cyan]How to fix:[/bold cyan]\n"
+                "- Create a requirements.txt file listing your dependencies\n"
+                "- Or use modern tools like Pipenv (Pipfile) or Poetry (pyproject.toml)",
+            )
             logger.error("No dependency management files found.")
         else:
             self.results.append(
@@ -987,9 +1316,15 @@ class CodeQualityPipeline:
                     f"Found: {', '.join(dep_files)}",
                 )
             )
+            print_rich_result(
+                "Dependency Management",
+                CheckStatus.PASSED.value,
+                f"Found dependency files: {', '.join(dep_files)}",
+            )
             logger.info(f"Dependency management files found: {', '.join(dep_files)}")
             try:
                 if has_requirements:
+                    # Only scan the requirements.txt file, not the installed packages
                     result = self._run_command(["pip-audit", "-r", "requirements.txt"])
                     if "No known vulnerabilities found" in result.stdout:
                         self.results.append(
@@ -999,38 +1334,99 @@ class CodeQualityPipeline:
                                 "No known vulnerabilities found.",
                             )
                         )
+                        print_rich_result(
+                            "Dependency Security",
+                            CheckStatus.PASSED.value,
+                            "No known vulnerabilities found in dependencies.",
+                        )
                         logger.info("Dependency security check passed.")
                     else:
+                        # Parse vulnerabilities from the output for better formatting
+                        detailed_msg = "[bold red]Security vulnerabilities found in dependencies[/bold red]\n\n"
+
+                        # Extract vulnerabilities from output
+                        vulns = []
+                        current_pkg = None
+                        current_vuln = []
+
+                        for line in result.stdout.strip().split("\n"):
+                            if "Found" in line and "vulnerability" in line:
+                                detailed_msg += f"[red]{line.strip()}[/red]\n\n"
+                            elif line.strip().startswith("→"):
+                                if current_pkg:
+                                    vulns.append(
+                                        f"[yellow]{current_pkg}[/yellow]:\n  "
+                                        + "\n  ".join(current_vuln)
+                                    )
+                                current_pkg = line.replace("→", "").strip()
+                                current_vuln = []
+                            elif line.strip() and current_pkg is not None:
+                                current_vuln.append(line.strip())
+
+                        # Add the last package if there is one
+                        if current_pkg and current_vuln:
+                            vulns.append(
+                                f"[yellow]{current_pkg}[/yellow]:\n  "
+                                + "\n  ".join(current_vuln)
+                            )
+
+                        if vulns:
+                            detailed_msg += "\n".join(vulns) + "\n\n"
+                        else:
+                            detailed_msg += result.stdout + "\n\n"
+
+                        detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
+                        detailed_msg += (
+                            "- Update vulnerable dependencies to newer versions\n"
+                        )
+                        detailed_msg += "- Run 'pip-audit -r requirements.txt --fix' to automatically fix issues\n"
+                        detailed_msg += "- Check for security advisories at https://pypi.org/security-advisories/"
+
                         self.results.append(
                             CheckResult(
                                 "Dependency Security",
                                 CheckStatus.FAILED,
-                                f"Vulnerabilities found:\n{result.stdout}",
+                                f"Found security vulnerabilities in dependencies:\n{result.stdout}",
                             )
                         )
+                        print_rich_result(
+                            "Dependency Security",
+                            CheckStatus.FAILED.value,
+                            detailed_msg,
+                        )
                         logger.error("Dependency security issues found.")
-                else:
+                elif has_pipfile:
+                    # Handle Pipenv (Pipfile) if needed
                     self.results.append(
                         CheckResult(
                             "Dependency Security",
                             CheckStatus.SKIPPED,
-                            "Dependency security check only supports requirements.txt.",
+                            "Security scan for Pipfile not implemented.",
                         )
                     )
-                    logger.info(
-                        "Skipping dependency security check (requirements.txt not found)."
-                    )
-            except FileNotFoundError:
-                self.results.append(
-                    CheckResult(
+                    print_rich_result(
                         "Dependency Security",
-                        CheckStatus.SKIPPED,
-                        "pip-audit not installed or not found.",
+                        CheckStatus.SKIPPED.value,
+                        "Security scan for Pipfile not implemented yet.\n"
+                        "[bold cyan]Tip:[/bold cyan] Run 'pipenv check' manually to check for vulnerabilities.",
                     )
-                )
-                logger.warning(
-                    "pip-audit not installed; skipping dependency security check."
-                )
+                    logger.info("Pipfile security check skipped (not implemented).")
+                elif has_poetry:
+                    # Handle Poetry (pyproject.toml) if needed
+                    self.results.append(
+                        CheckResult(
+                            "Dependency Security",
+                            CheckStatus.SKIPPED,
+                            "Security scan for Poetry not implemented.",
+                        )
+                    )
+                    print_rich_result(
+                        "Dependency Security",
+                        CheckStatus.SKIPPED.value,
+                        "Security scan for Poetry (pyproject.toml) not implemented yet.\n"
+                        "[bold cyan]Tip:[/bold cyan] Run 'poetry check' manually to check for issues.",
+                    )
+                    logger.info("Poetry security check skipped (not implemented).")
             except Exception as e:
                 self.results.append(
                     CheckResult(
@@ -1038,6 +1434,12 @@ class CodeQualityPipeline:
                         CheckStatus.FAILED,
                         f"Error checking dependency security: {str(e)}",
                     )
+                )
+                print_rich_result(
+                    "Dependency Security",
+                    CheckStatus.FAILED.value,
+                    f"[bold red]Error checking dependency security:[/bold red] {str(e)}\n\n"
+                    f"[bold cyan]How to fix:[/bold cyan] Make sure pip-audit is installed correctly.",
                 )
                 logger.exception("Error checking dependency security.")
 

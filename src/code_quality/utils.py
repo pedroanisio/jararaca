@@ -7,6 +7,7 @@ import subprocess
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
@@ -31,7 +32,8 @@ custom_theme = Theme(
         "skipped": "blue",
     }
 )
-console = Console(theme=custom_theme)
+# Enable markup processing
+console = Console(theme=custom_theme, markup=True)
 
 
 # Terminal colors for better readability (kept for backwards compatibility)
@@ -119,8 +121,9 @@ def print_rich_result(name: str, status: str, details: str = "") -> None:
     text.append(status, style=status_style)
 
     if details:
+        # Use markup directly with the console instead of creating a Text object
         panel = Panel(
-            Text(details.strip()),
+            details.strip(),  # Pass the string directly to allow markup processing
             title=text,
             border_style=status_style,
             expand=False,
