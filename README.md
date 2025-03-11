@@ -73,24 +73,44 @@ test_dir = tests
 exclude_dirs = venv,.venv,__pycache__,build,dist
 ```
 
-## Development
+## JSON Output
 
-### Setup Development Environment
+You can save the quality check results as JSON for programmatic consumption by using the `--json-output` option:
 
 ```bash
-# Clone the repository
-git clone https://github.com/jararaca/jararaca.git
-cd jararaca
-
-# Create a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install development dependencies
-pip install -e ".[dev]"
+code-quality . --json-output results.json
 ```
 
-### Running Tests
+The JSON file will contain a summary of the check results and detailed information for each check, in the following format:
+
+```json
+{
+  "summary": {
+    "passed": 2,
+    "failed": 10,
+    "skipped": 0,
+    "total": 12,
+    "status": "FAILED"
+  },
+  "checks": [
+    {
+      "name": "Code Formatting (Black)",
+      "status": "FAILED",
+      "details": "Files need formatting:\n..."
+    },
+    {
+      "name": "Import Sorting (isort)",
+      "status": "PASSED",
+      "details": "All imports are properly sorted."
+    },
+    // ... other checks
+  ]
+}
+```
+
+This JSON output can be used to integrate the quality checks with CI/CD pipelines, dashboards, or other automated systems.
+
+## Development
 
 ```bash
 pytest

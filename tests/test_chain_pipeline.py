@@ -4,7 +4,7 @@ Tests for the Code Quality Chain Pipeline implementation.
 
 import os
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, mock_open
 
 from code_quality.chain import CheckChain
 from code_quality.chain_pipeline import CodeQualityChainPipeline, main
@@ -137,10 +137,18 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
             "code_quality.chain_pipeline.Console"
         ) as mock_console_class, patch(
             "code_quality.chain_pipeline.subprocess.run"
-        ) as mock_subprocess_run:
+        ) as mock_subprocess_run, patch(
+            "code_quality.chain_pipeline.os.path.exists"
+        ) as mock_exists, patch(
+            "code_quality.chain_pipeline.os.path.isdir"
+        ) as mock_isdir:
 
             # Mock subprocess run for _check_prerequisites
             mock_subprocess_run.return_value.returncode = 0
+            
+            # Mock directory existence checks
+            mock_exists.return_value = True
+            mock_isdir.return_value = True
 
             # Create mock instances
             mock_chain = MagicMock()
@@ -232,12 +240,13 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     @patch("code_quality.chain_pipeline.ArgumentParser")
     @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
     def test_main_success(self, mock_pipeline_class, mock_arg_parser):
-        """Test the main function with a successful run."""
+        """Test the main function when checks succeed."""
         # Create mock instances
         mock_args = MagicMock()
         mock_args.project_path = self.project_path
         mock_args.config = None
         mock_args.auto_commit = False
+        mock_args.json_output = None
 
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = mock_args
@@ -265,12 +274,13 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     @patch("code_quality.chain_pipeline.ArgumentParser")
     @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
     def test_main_failure(self, mock_pipeline_class, mock_arg_parser):
-        """Test the main function with a failed run."""
+        """Test the main function when checks fail."""
         # Create mock instances
         mock_args = MagicMock()
         mock_args.project_path = self.project_path
         mock_args.config = None
         mock_args.auto_commit = False
+        mock_args.json_output = None
 
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = mock_args
@@ -304,6 +314,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_args.project_path = self.project_path
         mock_args.config = None
         mock_args.auto_commit = False
+        # Add json_output attribute
+        mock_args.json_output = None
 
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = mock_args
@@ -325,5 +337,69 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_pipeline_class.assert_called_once_with(self.project_path, None)
         mock_pipeline.run.assert_called_once()
 
-        # Check that the result is 1 (failure)
-        self.assertEqual(result, 1)
+        # Check that the result is 2 (exception)
+        self.assertEqual(result, 2)
+
+    def test_json_output(self):
+        """Test the JSON output functionality."""
+        with patch("code_quality.chain_pipeline.CheckChain") as mock_chain_class, patch(
+            "code_quality.chain_pipeline.Console"
+        ) as mock_console_class, patch(
+            "builtins.open", mock_open()
+        ) as mock_file, patch(
+            "json.dump"
+        ) as mock_json_dump, patch(
+            "code_quality.chain_pipeline.os.path.exists"
+        ) as mock_exists, patch(
+            "code_quality.chain_pipeline.os.path.isdir"
+        ) as mock_isdir, patch(
+            "code_quality.chain_pipeline.subprocess.run"
+        ) as mock_subprocess_run:
+
+            # Mock directory existence checks
+            mock_exists.return_value = True
+            mock_isdir.return_value = True
+            
+            # Mock subprocess run for _check_prerequisites
+            mock_subprocess_run.return_value.returncode = 0
+
+            # Create mock chain and console
+            mock_chain = MagicMock()
+            mock_console = MagicMock()
+
+            mock_chain_class.return_value = mock_chain
+            mock_console_class.return_value = mock_console
+
+            # Create test results
+            test_results = [
+                CheckResult("Test 1", CheckStatus.PASSED, "Test 1 passed"),
+                CheckResult("Test 2", CheckStatus.FAILED, "Test 2 failed"),
+                CheckResult("Test 3", CheckStatus.SKIPPED, "Test 3 skipped"),
+            ]
+            mock_chain.execute.return_value = test_results
+
+            # Initialize the pipeline and run with JSON output
+            pipeline = CodeQualityChainPipeline(self.project_path)
+            pipeline.results = test_results
+            pipeline.save_json_output("test_output.json")
+
+            # Check that json.dump was called with the expected data
+            mock_json_dump.assert_called_once()
+            args, _ = mock_json_dump.call_args
+            
+            # Check the structure of the JSON output
+            json_data = args[0]
+            self.assertEqual(json_data["summary"]["passed"], 1)
+            self.assertEqual(json_data["summary"]["failed"], 1)
+            self.assertEqual(json_data["summary"]["skipped"], 1)
+            self.assertEqual(json_data["summary"]["total"], 3)
+            self.assertEqual(json_data["summary"]["status"], "FAILED")
+            
+            # Check each check's data
+            self.assertEqual(len(json_data["checks"]), 3)
+            self.assertEqual(json_data["checks"][0]["name"], "Test 1")
+            self.assertEqual(json_data["checks"][0]["status"], "PASSED")
+            self.assertEqual(json_data["checks"][1]["name"], "Test 2")
+            self.assertEqual(json_data["checks"][1]["status"], "FAILED")
+            self.assertEqual(json_data["checks"][2]["name"], "Test 3")
+            self.assertEqual(json_data["checks"][2]["status"], "SKIPPED")

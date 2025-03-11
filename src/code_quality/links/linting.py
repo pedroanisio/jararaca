@@ -35,6 +35,14 @@ class LintingCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
+        
+        # Skip the check if no source directories exist
+        if not source_dirs:
+            return [CheckResult(
+                self.name, 
+                CheckStatus.SKIPPED, 
+                "No source directories found to check."
+            )]
 
         # Build the command to run pylint
         command = ["pylint"]
@@ -48,9 +56,13 @@ class LintingCheck(CheckLink):
             status = CheckStatus.PASSED
             details = "All code passes linting checks."
         else:
+            # Check if pylint command was not found
+            if "No such file or directory" in result.stderr:
+                status = CheckStatus.FAILED
+                details = f"Linting failed: pylint command not found. Is it installed?\n{result.stderr}"
             # Pylint returns different exit codes based on the type of issues found
             # 0 means no errors, 1-15 means various types of issues
-            if result.returncode >= 16:
+            elif result.returncode >= 16:
                 status = CheckStatus.FAILED
                 details = f"Linting failed with an error:\n{result.stderr}"
             else:

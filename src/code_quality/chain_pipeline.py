@@ -11,6 +11,8 @@ import logging
 import os
 import subprocess
 import sys
+import json
+import traceback
 from argparse import ArgumentParser
 from typing import Any, Dict, List, Optional
 
@@ -165,9 +167,22 @@ class CodeQualityChainPipeline:
         self._check_prerequisites()
 
         # Create context for the checks
-        src_dirs = [
+        all_src_dirs = [
             dir.strip() for dir in self.config.get("src_dirs", "src,app").split(",")
         ]
+        
+        # Filter out directories that don't exist
+        src_dirs = []
+        for dir_path in all_src_dirs:
+            full_path = os.path.join(self.project_path, dir_path)
+            if os.path.exists(full_path) and os.path.isdir(full_path):
+                src_dirs.append(dir_path)
+            else:
+                logging.warning(f"Source directory '{dir_path}' does not exist, skipping.")
+        
+        if not src_dirs:
+            logging.warning("No valid source directories found. Some checks may fail.")
+        
         context = {
             "project_path": self.project_path,
             "source_dirs": src_dirs,
@@ -198,10 +213,13 @@ class CodeQualityChainPipeline:
             "mypy",
             "bandit",
             "ruff",
+            "pylint",
             "coverage",
             "git",
         ]
 
+        missing_tools = []
+        
         for tool in required_tools:
             cmd = ["which", tool] if sys.platform != "win32" else ["where", tool]
             try:
@@ -210,10 +228,26 @@ class CodeQualityChainPipeline:
                     logging.info(f"Tool found: {tool}")
                 else:
                     logging.warning(f"Tool not found: {tool}")
+                    missing_tools.append(tool)
             except Exception as e:
                 logging.error(f"Error checking for tool {tool}: {str(e)}")
+                missing_tools.append(tool)
 
-        logging.info("✓ All required tools are installed.")
+        if missing_tools:
+            missing_str = ", ".join(missing_tools)
+            logging.warning(f"Missing tools that might affect checks: {missing_str}")
+            self.console.print(
+                f"[bold yellow]Warning: Some required tools are missing: {missing_str}[/bold yellow]"
+            )
+            self.console.print(
+                "Some quality checks may fail. Consider installing the missing tools."
+            )
+        else:
+            logging.info("✓ All required tools are installed.")
+            self.console.print(
+                "✓ All required tools are installed.",
+                style="bold green"
+            )
 
     def _print_summary(self) -> None:
         """Print a summary of the check results."""
@@ -250,57 +284,99 @@ class CodeQualityChainPipeline:
             f"Overall quality check status: {'PASSED' if failed == 0 else 'FAILED'}"
         )
 
+    def _results_to_json(self) -> Dict[str, Any]:
+        """
+        Convert the check results to a JSON-serializable dictionary.
+        
+        Returns:
+            A dictionary containing the results in a format suitable for JSON conversion.
+        """
+        passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
+        failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
+        skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)
+        
+        # Create the JSON structure
+        json_output = {
+            "summary": {
+                "passed": passed,
+                "failed": failed,
+                "skipped": skipped,
+                "total": len(self.results),
+                "status": "PASSED" if failed == 0 else "FAILED"
+            },
+            "checks": []
+        }
+        
+        # Add detailed information for each check
+        for result in self.results:
+            json_output["checks"].append({
+                "name": result.name,
+                "status": result.status.value,
+                "details": result.details
+            })
+            
+        return json_output
+    
+    def save_json_output(self, json_file: str) -> None:
+        """
+        Save the check results as JSON to the specified file.
+        
+        Args:
+            json_file: Path to the file where the JSON output should be saved.
+        """
+        if not self.results:
+            logging.warning("No results to save as JSON.")
+            return
+            
+        json_output = self._results_to_json()
+        
+        try:
+            with open(json_file, 'w') as f:
+                json.dump(json_output, f, indent=2)
+            logging.info(f"Results saved as JSON to {json_file}")
+            self.console.print(f"Results saved as JSON to {json_file}", style="bold green")
+        except Exception as e:
+            logging.error(f"Failed to save JSON output: {str(e)}")
+            self.console.print(f"Failed to save JSON output: {str(e)}", style="bold red")
+
 
 def main(args: Optional[List[str]] = None) -> int:
     """
-    Execute the code quality checks.
+    Main entry point for the code quality pipeline.
 
     Args:
-        args: Command line arguments. If None, sys.argv[1:] will be used.
+        args: Command line arguments.
 
     Returns:
-        An exit code (0 for success, non-zero for failure).
+        0 if all checks passed, 1 otherwise.
     """
-    if args is None:
-        args = sys.argv[1:]
-
-    # Parse command line arguments
-    parser = ArgumentParser(description="Run code quality checks on a Python project")
+    parser = ArgumentParser(description="Run code quality checks on a Python project.")
     parser.add_argument(
-        "project_path",
-        help="Path to the Python project to check",
+        "project_path", help="Path to the project to check.", nargs="?", default="."
     )
     parser.add_argument(
-        "--config",
-        help="Path to configuration file",
+        "--config", help="Path to a configuration file.", default=None
     )
     parser.add_argument(
-        "--auto-commit",
-        action="store_true",
-        help="Enable automatic commit and branch processing",
+        "--json-output", 
+        help="Path to save results as JSON.", 
+        default=None,
+        dest="json_output"
     )
 
-    # Parse arguments
     parsed_args = parser.parse_args(args)
 
     try:
-        # Create and run the pipeline
-        pipeline = CodeQualityChainPipeline(
-            parsed_args.project_path, parsed_args.config
-        )
-
-        # Update config if auto-commit is specified
-        if parsed_args.auto_commit:
-            pipeline.config["enable_auto_commit"] = "true"
-            logging.info("Auto-commit enabled via command line argument.")
-
-        result = pipeline.run()
-
-        logging.info("Pipeline finished.")
-
-        # Return appropriate exit code
-        return 0 if result else 1
-
+        # Initialize and run the pipeline
+        pipeline = CodeQualityChainPipeline(parsed_args.project_path, parsed_args.config)
+        success = pipeline.run()
+        
+        # Save JSON output if specified
+        if parsed_args.json_output:
+            pipeline.save_json_output(parsed_args.json_output)
+            
+        return 0 if success else 1
     except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
-        return 1
+        logging.error(f"Pipeline failed with an error: {str(e)}")
+        traceback.print_exc()
+        return 2

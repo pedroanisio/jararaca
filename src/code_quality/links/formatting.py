@@ -35,6 +35,14 @@ class FormattingCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
+        
+        # Skip the check if no source directories exist
+        if not source_dirs:
+            return [CheckResult(
+                self.name, 
+                CheckStatus.SKIPPED, 
+                "No source directories found to check."
+            )]
 
         # Build the command to run black in check mode
         command = ["black", "--check"]
