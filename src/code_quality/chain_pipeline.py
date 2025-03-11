@@ -246,7 +246,7 @@ class CodeQualityChainPipeline:
         # First print detailed results for each check
         self.console.print("\n      Detailed Check Results      \n")
         for result in self.results:
-            print_rich_result(result.name, result.status.value, result.details)
+            print_rich_result(result.name, result.status, result.details)
 
         # Then print the summary as before
         passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
@@ -278,17 +278,18 @@ class CodeQualityChainPipeline:
 
     def _results_to_json(self) -> Dict[str, Any]:
         """
-        Convert the check results to a JSON-serializable dictionary.
+        Convert check results to a structured JSON format.
 
         Returns:
-            A dictionary containing the results in a format suitable for JSON conversion.
+            A dictionary with the structured JSON representation of results.
         """
+        # Count results by status
         passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
         failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
         skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)
 
         # Create the JSON structure with metadata
-        json_output = {
+        json_output: Dict[str, Any] = {
             "metadata": {
                 "timestamp": datetime.now().isoformat(),
                 "project_path": self.project_path,
@@ -302,7 +303,7 @@ class CodeQualityChainPipeline:
                 "total": len(self.results),
                 "status": "PASSED" if failed == 0 else "FAILED",
             },
-            "checks": [],
+            "checks": [],  # This will be a list of check results
         }
 
         # Add detailed information for each check

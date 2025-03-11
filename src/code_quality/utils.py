@@ -127,7 +127,7 @@ def format_result_output(name: str, status: str, details: str = "") -> str:
 
 def print_rich_result(
     title_or_result: Union[str, CheckResult], 
-    status: Optional[CheckStatus] = None, 
+    status: Optional[Union[CheckStatus, str]] = None, 
     details: Optional[str] = None
 ) -> None:
     """
@@ -145,21 +145,20 @@ def print_rich_result(
     if isinstance(title_or_result, CheckResult):
         result = title_or_result
         title = result.name
-        status = (
-            result.status.value
-            if isinstance(result.status, CheckStatus)
-            else result.status
-        )
+        status = result.status
         details = result.details
     else:
         title = title_or_result
         details = details or ""
         # status is used as-is
 
-    if status == CheckStatus.PASSED.value:
+    # Get the string value of the status for display and comparison
+    status_value = status.value if isinstance(status, CheckStatus) else status
+
+    if status_value == CheckStatus.PASSED.value:
         title_display = f"✓ {title}: PASSED"
         style = "green"
-    elif status == CheckStatus.FAILED.value:
+    elif status_value == CheckStatus.FAILED.value:
         title_display = f"✗ {title}: FAILED"
         style = "red"
     else:

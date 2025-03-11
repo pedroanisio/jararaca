@@ -6,7 +6,7 @@ This module provides a check that verifies Python functions do not exceed a maxi
 
 import ast
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus
@@ -15,30 +15,43 @@ from ..utils import CheckResult, CheckStatus
 class FunctionVisitor(ast.NodeVisitor):
     """AST visitor that collects function definitions and their line lengths."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the function visitor."""
-        self.functions = []  # [(name, start_line, end_line, length)]
+        self.functions: List[Tuple[str, int, int, int]] = []  # [(name, start_line, end_line, length)]
 
-    def visit_FunctionDef(self, node):
-        """Visit a function definition node."""
-        name = node.name
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Visit a function definition and record its length."""
         start_line = node.lineno
         end_line = self._get_last_line(node)
         length = end_line - start_line + 1
-        self.functions.append((name, start_line, end_line, length))
+        self.functions.append((node.name, start_line, end_line, length))
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node):
-        """Visit an async function definition node."""
-        self.visit_FunctionDef(node)
-
-    def visit_ClassDef(self, node):
-        """Visit a class definition node."""
-        # Continue visiting inside the class to find methods
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        """Visit an async function definition and record its length."""
+        start_line = node.lineno
+        end_line = self._get_last_line(node)
+        length = end_line - start_line + 1
+        self.functions.append((node.name, start_line, end_line, length))
         self.generic_visit(node)
 
-    def _get_last_line(self, node):
-        """Get the last line of a node."""
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Visit a class definition and record method lengths."""
+        self.generic_visit(node)
+
+    def _get_last_line(self, node: Any) -> int:
+        """
+        Get the last line of a node.
+        
+        Args:
+            node: An AST node
+            
+        Returns:
+            The last line number of the node
+        """
+        if not hasattr(node, "lineno"):
+            return 0
+            
         max_line = node.lineno
         for child in ast.iter_child_nodes(node):
             if hasattr(child, "lineno"):

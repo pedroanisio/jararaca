@@ -20,7 +20,7 @@ class FileLengthCheck(CheckLink):
     breaking down large files into smaller, more focused modules.
     """
 
-    def __init__(self, max_lines: int = 500):
+    def __init__(self, max_lines: int = 300):
         """
         Initialize the file length check.
 
@@ -32,13 +32,15 @@ class FileLengthCheck(CheckLink):
 
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
-        Check Python files for length.
+        Execute the file length check.
 
         Args:
-            context: Context dictionary containing project_path and source_dirs.
+            context: A dictionary containing the execution context, including:
+                - project_path: Path to the project to check
+                - source_dirs: List of directories to check (relative to project_path)
 
         Returns:
-            List of CheckResult objects.
+            A list containing one CheckResult with the check outcome.
         """
         project_path = context.get("project_path", "")
         source_dirs = context.get("source_dirs", ["src"])
@@ -52,17 +54,15 @@ class FileLengthCheck(CheckLink):
                 )
             ]
 
-        # Initialize results
+        # List to store files exceeding the max length
+        # Tuple contains (file_path, line_count) where line_count can be int or str (for errors)
         long_files: List[Tuple[str, Union[int, str]]] = []
 
-        # Find Python files
-        for dir_name in source_dirs:
-            dir_path = os.path.join(project_path, dir_name)
+        for source_dir in source_dirs:
+            dir_path = os.path.join(project_path, source_dir)
             if not os.path.exists(dir_path):
-                logging.warning(f"Source directory '{dir_name}' does not exist, skipping.")
                 continue
 
-            # Walk through the directory
             for root, _, files in os.walk(dir_path):
                 for file in files:
                     if not file.endswith(".py"):
@@ -71,12 +71,11 @@ class FileLengthCheck(CheckLink):
                     file_path = os.path.join(root, file)
                     try:
                         with open(file_path, "r", encoding="utf-8") as f:
-                            line_count = sum(1 for _ in f)
-
-                        if line_count > self.max_lines:
-                            long_files.append((file_path, line_count))
+                            lines = f.readlines()
+                            line_count = len(lines)
+                            if line_count > self.max_lines:
+                                long_files.append((file_path, line_count))
                     except Exception as e:
-                        # If we can't read the file, we'll consider it a failure
                         # Use a string message with 'Error:' to maintain backward compatibility with tests
                         long_files.append((file_path, f"Error: {str(e)}"))
                         logging.error(f"Error reading {file_path}: {str(e)}")
@@ -93,4 +92,4 @@ class FileLengthCheck(CheckLink):
                 f"All files are under the maximum length of {self.max_lines} lines."
             )
 
-        return [CheckResult(self.name, status, details)]
+        return [CheckResult(name=self.name, status=status, details=details)]

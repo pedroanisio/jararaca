@@ -15,27 +15,27 @@ from ..utils import CheckResult, CheckStatus
 class DocstringVisitor(ast.NodeVisitor):
     """AST visitor that checks for missing docstrings in modules, classes, and functions."""
 
-    def __init__(self, skip_private: bool = True):
+    def __init__(self, skip_private: bool = True) -> None:
         """Initialize the docstring visitor."""
         self.missing_docstrings: List[Tuple[str, str, int]] = []  # (type, name, line_number)
         self.skip_private = skip_private
         self.has_module_docstring = False
 
-    def visit_Module(self, node):
-        """Visit a module node and check for module docstring."""
-        if ast.get_docstring(node):
-            self.has_module_docstring = True
-        else:
-            self.missing_docstrings.append(("module", "", node.lineno))
+    def visit_Module(self, node: ast.Module) -> None:
+        """Visit a module node and check if it has a docstring."""
+        if not ast.get_docstring(node):
+            # Modules don't have line numbers in AST, use 1 as default
+            self.missing_docstrings.append(("module", "__init__", 1))
+        # Continue visiting the rest of the module
         self.generic_visit(node)
 
-    def visit_ClassDef(self, node):
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Visit a class definition node and check for class docstring."""
-        if not ast.get_docstring(node):
+        if not ast.get_docstring(node) and not (self.skip_private and node.name.startswith("_")):
             self.missing_docstrings.append(("class", node.name, node.lineno))
         self.generic_visit(node)
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Visit a function definition node and check for function docstring."""
         if (
             self.skip_private
@@ -45,12 +45,12 @@ class DocstringVisitor(ast.NodeVisitor):
             self.generic_visit(node)
             return
 
-        if not ast.get_docstring(node):
+        if not ast.get_docstring(node) and not (self.skip_private and node.name.startswith("_")):
             self.missing_docstrings.append(("function", node.name, node.lineno))
 
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node):
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         """Visit an async function definition node."""
         if (
             self.skip_private
@@ -60,7 +60,7 @@ class DocstringVisitor(ast.NodeVisitor):
             self.generic_visit(node)
             return
 
-        if not ast.get_docstring(node):
+        if not ast.get_docstring(node) and not (self.skip_private and node.name.startswith("_")):
             self.missing_docstrings.append(("async function", node.name, node.lineno))
 
         self.generic_visit(node)
