@@ -15,6 +15,7 @@ import json
 import traceback
 from argparse import ArgumentParser
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 
 from rich.console import Console
 from rich.table import Table
@@ -295,8 +296,14 @@ class CodeQualityChainPipeline:
         failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
         skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)
         
-        # Create the JSON structure
+        # Create the JSON structure with metadata
         json_output = {
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "project_path": self.project_path,
+                "configuration": self.config,
+                "version": "1.0"  # Version of the JSON format
+            },
             "summary": {
                 "passed": passed,
                 "failed": failed,
@@ -309,13 +316,121 @@ class CodeQualityChainPipeline:
         
         # Add detailed information for each check
         for result in self.results:
-            json_output["checks"].append({
+            # Parse the details to extract more structured information when possible
+            details_obj = self._parse_details(result.name, result.details)
+            
+            check_info = {
                 "name": result.name,
                 "status": result.status.value,
-                "details": result.details
-            })
+                "raw_details": result.details,  # Always include the raw details
+                "details": details_obj  # Add structured details when available
+            }
+            
+            json_output["checks"].append(check_info)
             
         return json_output
+    
+    def _parse_details(self, check_name: str, details: str) -> Dict[str, Any]:
+        """
+        Parse the details text to extract structured information.
+        
+        Args:
+            check_name: Name of the check
+            details: Details text from the check result
+            
+        Returns:
+            A dictionary containing structured details information
+        """
+        # Default structure
+        parsed = {
+            "summary": details.split('\n')[0] if details else "",
+            "issues": []
+        }
+        
+        # Check-specific parsing
+        if "Code Formatting" in check_name:
+            if "Files need formatting" in details:
+                # Extract file list if present
+                files = [line.strip() for line in details.split('\n')[1:] if line.strip()]
+                parsed["files"] = files
+                
+        elif "Import Sorting" in check_name:
+            # Import sorting might include diffs
+            if "Imports need sorting" in details:
+                # Try to extract file paths and diffs
+                files = []
+                current_file = None
+                for line in details.split('\n'):
+                    if line.startswith('---') and 'before' in line:
+                        current_file = line.split('---')[1].strip().split(':before')[0].strip()
+                        files.append(current_file)
+                parsed["files"] = files
+                
+        elif "Linting" in check_name:
+            # Extract individual linting issues
+            issues = []
+            current_issue = None
+            for line in details.split('\n'):
+                if line.strip() and ':' in line and any(char.isdigit() for char in line):
+                    # This looks like a linting issue with line numbers
+                    current_issue = line.strip()
+                    issues.append(current_issue)
+            if issues:
+                parsed["issues"] = issues
+                
+        elif "Type Checking" in check_name:
+            # Extract type checking issues
+            issues = []
+            current_issue = None
+            for line in details.split('\n'):
+                if line.strip() and ':' in line and any(char.isdigit() for char in line):
+                    if 'error:' in line or 'note:' in line:
+                        current_issue = line.strip()
+                        issues.append(current_issue)
+            if issues:
+                parsed["issues"] = issues
+                
+        elif "Security Check" in check_name:
+            # Extract security issues
+            issues = []
+            for line in details.split('\n'):
+                if "Issue:" in line:
+                    issues.append(line.strip())
+            if issues:
+                parsed["issues"] = issues
+                
+        elif "Test Coverage" in check_name:
+            # Extract coverage percentage
+            for line in details.split('\n'):
+                if "coverage is" in line:
+                    parts = line.split("coverage is")
+                    if len(parts) > 1:
+                        coverage_text = parts[1].strip()
+                        coverage_value = coverage_text.split('%')[0].strip()
+                        try:
+                            parsed["coverage_percentage"] = float(coverage_value)
+                        except ValueError:
+                            pass
+                        
+        elif "Naming Conventions" in check_name or "File Length" in check_name or "Function Length" in check_name:
+            # Extract files/functions exceeding limits
+            issues = []
+            for line in details.split('\n'):
+                if line.strip() and ':' in line and ('/' in line or '\\' in line):
+                    issues.append(line.strip())
+            if issues:
+                parsed["issues"] = issues
+                
+        elif "Docstring Check" in check_name:
+            # Extract missing docstrings
+            issues = []
+            for line in details.split('\n'):
+                if line.strip() and '-' in line and 'function' in line:
+                    issues.append(line.strip())
+            if issues:
+                parsed["issues"] = issues
+                
+        return parsed
     
     def save_json_output(self, json_file: str) -> None:
         """
