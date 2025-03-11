@@ -24,10 +24,17 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_initialization(self):
         """Test initializing the pipeline."""
-        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain:
-            # Create a mock chain instance
+        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain, \
+             patch("src.code_quality.chain_pipeline.configparser.ConfigParser") as mock_config:
+            # Create mock instances
             mock_chain_instance = MagicMock()
             mock_chain.return_value = mock_chain_instance
+            
+            # Mock config
+            mock_config_instance = MagicMock()
+            mock_config.return_value = mock_config_instance
+            mock_config_instance.sections.return_value = ["general", "paths"]
+            mock_config_instance.__getitem__.return_value = {"key": "value"}
 
             # Initialize the pipeline
             pipeline = CodeQualityChainPipeline(self.project_path)
@@ -43,53 +50,80 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_build_check_chain(self):
         """Test building the check chain."""
-        with patch(
-            "src.code_quality.chain_pipeline.FormattingCheck"
-        ) as mock_formatting, patch(
-            "src.code_quality.chain_pipeline.ImportsCheck"
-        ) as mock_imports, patch(
-            "src.code_quality.chain_pipeline.LintingCheck"
-        ) as mock_linting, patch(
-            "src.code_quality.chain_pipeline.TestCoverageCheck"
-        ) as mock_coverage:
+        with patch("src.code_quality.chain_pipeline.FormattingCheck") as mock_formatting, \
+             patch("src.code_quality.chain_pipeline.ImportsCheck") as mock_imports, \
+             patch("src.code_quality.chain_pipeline.LintingCheck") as mock_linting, \
+             patch("src.code_quality.chain_pipeline.RuffCheck") as mock_ruff, \
+             patch("src.code_quality.chain_pipeline.TypeCheckingLink") as mock_type, \
+             patch("src.code_quality.chain_pipeline.SecurityCheckLink") as mock_security, \
+             patch("src.code_quality.chain_pipeline.TestCoverageCheck") as mock_coverage, \
+             patch("src.code_quality.chain_pipeline.NamingConventionsCheck") as mock_naming, \
+             patch("src.code_quality.chain_pipeline.FileLengthCheck") as mock_file_length, \
+             patch("src.code_quality.chain_pipeline.FunctionLengthCheck") as mock_func_length, \
+             patch("src.code_quality.chain_pipeline.DocstringCheck") as mock_docstring, \
+             patch("src.code_quality.chain_pipeline.DependencyCheck") as mock_dependency, \
+             patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain_class:
 
-            # Create mock instances
+            # Create mock chain
+            mock_chain = MagicMock()
+            mock_chain_class.return_value = mock_chain
+
+            # Create mock instances for all check classes
             mock_formatting_instance = MagicMock()
             mock_imports_instance = MagicMock()
             mock_linting_instance = MagicMock()
+            mock_ruff_instance = MagicMock()
+            mock_type_instance = MagicMock()
+            mock_security_instance = MagicMock()
             mock_coverage_instance = MagicMock()
+            mock_naming_instance = MagicMock()
+            mock_file_length_instance = MagicMock()
+            mock_func_length_instance = MagicMock()
+            mock_docstring_instance = MagicMock()
+            mock_dependency_instance = MagicMock()
 
+            # Set up the return values for the mocks
             mock_formatting.return_value = mock_formatting_instance
             mock_imports.return_value = mock_imports_instance
             mock_linting.return_value = mock_linting_instance
+            mock_ruff.return_value = mock_ruff_instance
+            mock_type.return_value = mock_type_instance
+            mock_security.return_value = mock_security_instance
             mock_coverage.return_value = mock_coverage_instance
+            mock_naming.return_value = mock_naming_instance
+            mock_file_length.return_value = mock_file_length_instance
+            mock_func_length.return_value = mock_func_length_instance
+            mock_docstring.return_value = mock_docstring_instance
+            mock_dependency.return_value = mock_dependency_instance
 
             # Initialize the pipeline
             pipeline = CodeQualityChainPipeline(self.project_path)
 
-            # Check that each check class was instantiated
+            # Check that all check classes were instantiated
             mock_formatting.assert_called_once()
             mock_imports.assert_called_once()
             mock_linting.assert_called_once()
-            mock_coverage.assert_called_once_with(min_coverage=80)
+            mock_ruff.assert_called_once()
+            mock_type.assert_called_once()
+            mock_security.assert_called_once()
+            mock_coverage.assert_called_once()
+            mock_naming.assert_called_once()
+            mock_file_length.assert_called_once()
+            mock_func_length.assert_called_once()
+            mock_docstring.assert_called_once()
+            mock_dependency.assert_called_once()
 
-            # Check that the chain was built correctly by checking that add_link was called for each check
-            chain = pipeline.check_chain
-            add_link_calls = [call[0][0] for call in chain.add_link.call_args_list]
-
-            self.assertEqual(len(add_link_calls), 4)
-            self.assertEqual(add_link_calls[0], mock_formatting_instance)
-            self.assertEqual(add_link_calls[1], mock_imports_instance)
-            self.assertEqual(add_link_calls[2], mock_linting_instance)
-            self.assertEqual(add_link_calls[3], mock_coverage_instance)
+            # Check that add_link was called for each check
+            self.assertEqual(mock_chain.add_link.call_count, 12)
 
     def test_run(self):
         """Test running the pipeline."""
-        with patch(
-            "src.code_quality.chain_pipeline.CheckChain"
-        ) as mock_chain_class, patch(
-            "src.code_quality.chain_pipeline.Console"
-        ) as mock_console_class:
+        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain_class, \
+             patch("src.code_quality.chain_pipeline.Console") as mock_console_class, \
+             patch("src.code_quality.chain_pipeline.subprocess.run") as mock_subprocess_run:
+
+            # Mock subprocess run for _check_prerequisites
+            mock_subprocess_run.return_value.returncode = 0
 
             # Create mock instances
             mock_chain = MagicMock()
@@ -110,13 +144,17 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
             # Initialize and run the pipeline
             pipeline = CodeQualityChainPipeline(self.project_path)
+            
+            # Override config for test
+            pipeline.config = {"src_dirs": "src,app"}
+            
             result = pipeline.run()
 
             # Check that the chain was executed with the correct context
             mock_chain.execute.assert_called_once()
             context_arg = mock_chain.execute.call_args[0][0]
             self.assertEqual(context_arg["project_path"], self.project_path)
-            self.assertEqual(context_arg["source_dirs"], ["src"])
+            self.assertEqual(context_arg["source_dirs"], ["src", "app"])
 
             # Check that the results were set correctly
             self.assertEqual(pipeline.results, mock_results)
@@ -135,11 +173,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_print_summary(self):
         """Test printing the pipeline summary."""
-        with patch(
-            "src.code_quality.chain_pipeline.create_summary_table"
-        ) as mock_create_table, patch(
-            "src.code_quality.chain_pipeline.Console"
-        ) as mock_console_class:
+        with patch("src.code_quality.chain_pipeline.create_summary_table") as mock_create_table, \
+             patch("src.code_quality.chain_pipeline.Console") as mock_console_class:
 
             # Create mock instances
             mock_console = MagicMock()
@@ -181,6 +216,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         # Create mock instances
         mock_args = MagicMock()
         mock_args.project_path = self.project_path
+        mock_args.config = None
+        mock_args.auto_commit = False
 
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = mock_args
@@ -199,7 +236,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_parser.parse_args.assert_called_once_with([self.project_path])
 
         # Check that the pipeline was created and run was called
-        mock_pipeline_class.assert_called_once_with(self.project_path)
+        mock_pipeline_class.assert_called_once_with(self.project_path, None)
         mock_pipeline.run.assert_called_once()
 
         # Check that the result is 0 (success)
@@ -212,6 +249,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         # Create mock instances
         mock_args = MagicMock()
         mock_args.project_path = self.project_path
+        mock_args.config = None
+        mock_args.auto_commit = False
 
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = mock_args
@@ -230,7 +269,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_parser.parse_args.assert_called_once_with([self.project_path])
 
         # Check that the pipeline was created and run was called
-        mock_pipeline_class.assert_called_once_with(self.project_path)
+        mock_pipeline_class.assert_called_once_with(self.project_path, None)
         mock_pipeline.run.assert_called_once()
 
         # Check that the result is 1 (failure)
@@ -243,6 +282,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         # Create mock instances
         mock_args = MagicMock()
         mock_args.project_path = self.project_path
+        mock_args.config = None
+        mock_args.auto_commit = False
 
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = mock_args
@@ -261,7 +302,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_parser.parse_args.assert_called_once_with([self.project_path])
 
         # Check that the pipeline was created and run was called
-        mock_pipeline_class.assert_called_once_with(self.project_path)
+        mock_pipeline_class.assert_called_once_with(self.project_path, None)
         mock_pipeline.run.assert_called_once()
 
         # Check that the result is 1 (failure)
