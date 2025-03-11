@@ -5,6 +5,7 @@ A comprehensive validation tool that checks Python code against established
 development standards and guidelines.
 """
 
-from .pipeline import CheckResult, CheckStatus, CodeQualityPipeline
+from .chain_pipeline import CodeQualityChainPipeline
+from .utils import CheckResult, CheckStatus
 
-__all__ = ["CodeQualityPipeline", "CheckResult", "CheckStatus"]
+__all__ = ["CodeQualityChainPipeline", "CheckResult", "CheckStatus"]

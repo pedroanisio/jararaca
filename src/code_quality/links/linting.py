@@ -35,11 +35,11 @@ class LintingCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
-        
+
         # Build the command to run pylint
         command = ["pylint"]
         command.extend(source_dirs)
-        
+
         # Run pylint
         result = run_command(command, cwd=project_path)
 
@@ -59,4 +59,4 @@ class LintingCheck(CheckLink):
                 if result.stderr:
                     details += f"\nErrors:\n{result.stderr}"
 
-        return [CheckResult(self.name, status, details)] 
+        return [CheckResult(self.name, status, details)]

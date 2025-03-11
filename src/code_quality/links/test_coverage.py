@@ -21,7 +21,7 @@ class TestCoverageCheck(CheckLink):
     def __init__(self, min_coverage: int = 80):
         """
         Initialize a test coverage check link.
-        
+
         Args:
             min_coverage: Minimum required coverage percentage (default: 80)
         """
@@ -42,25 +42,25 @@ class TestCoverageCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
-        
+
         # Join source dirs with commas for the --cov argument
         source_dirs_str = ",".join(source_dirs)
-        
+
         # Build the command to run pytest with coverage
         command = [
-            "pytest", 
-            f"--cov={source_dirs_str}", 
-            "--cov-report=term", 
-            "--cov-fail-under", 
-            str(self.min_coverage)
+            "pytest",
+            f"--cov={source_dirs_str}",
+            "--cov-report=term",
+            "--cov-fail-under",
+            str(self.min_coverage),
         ]
-        
+
         # Run pytest with coverage
         result = run_command(command, cwd=project_path)
 
         # Parse the result to extract coverage percentage
         coverage_percentage = self._extract_coverage(result.stdout)
-        
+
         if coverage_percentage is not None:
             if coverage_percentage >= self.min_coverage:
                 status = CheckStatus.PASSED
@@ -75,14 +75,14 @@ class TestCoverageCheck(CheckLink):
                 details += f"\nErrors:\n{result.stderr}"
 
         return [CheckResult(self.name, status, details)]
-    
+
     def _extract_coverage(self, output: str) -> Optional[int]:
         """
         Extract the coverage percentage from the pytest-cov output.
-        
+
         Args:
             output: The output from pytest-cov
-            
+
         Returns:
             The coverage percentage as an integer, or None if it couldn't be extracted
         """
@@ -90,4 +90,4 @@ class TestCoverageCheck(CheckLink):
         match = re.search(r"TOTAL\s+\d+\s+\d+\s+(\d+)%", output)
         if match:
             return int(match.group(1))
-        return None 
+        return None

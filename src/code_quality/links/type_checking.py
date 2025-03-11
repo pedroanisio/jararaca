@@ -35,11 +35,11 @@ class TypeCheckingLink(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
-        
+
         # Build the command to run mypy
         command = ["mypy"]
         command.extend(source_dirs)
-        
+
         # Run mypy
         result = run_command(command, cwd=project_path)
 
@@ -53,4 +53,4 @@ class TypeCheckingLink(CheckLink):
             if result.stderr:
                 details += f"\nErrors:\n{result.stderr}"
 
-        return [CheckResult(self.name, status, details)] 
+        return [CheckResult(self.name, status, details)]

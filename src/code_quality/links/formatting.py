@@ -35,11 +35,11 @@ class FormattingCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
-        
+
         # Build the command to run black in check mode
         command = ["black", "--check"]
         command.extend(source_dirs)
-        
+
         # Run black in check mode
         result = run_command(command, cwd=project_path)
 
@@ -53,4 +53,4 @@ class FormattingCheck(CheckLink):
             if "error" in result.stderr.lower():
                 details += f"\nErrors:\n{result.stderr}"
 
-        return [CheckResult(self.name, status, details)] 
+        return [CheckResult(self.name, status, details)]

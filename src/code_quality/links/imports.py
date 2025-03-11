@@ -35,11 +35,11 @@ class ImportsCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
-        
+
         # Build the command to run isort in check mode
         command = ["isort", "--check-only", "--diff"]
         command.extend(source_dirs)
-        
+
         # Run isort in check mode
         result = run_command(command, cwd=project_path)
 
@@ -53,4 +53,4 @@ class ImportsCheck(CheckLink):
             if result.stderr:
                 details += f"\nErrors:\n{result.stderr}"
 
-        return [CheckResult(self.name, status, details)] 
+        return [CheckResult(self.name, status, details)]

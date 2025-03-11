@@ -1,9 +1,12 @@
 """
-Utility functions for the code quality pipeline.
+Utility functions and classes for code quality checks.
 """
 
 import logging
+import os
 import subprocess
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
@@ -51,23 +54,52 @@ class Colors:
     UNDERLINE = "\033[4m"
 
 
-def run_command(
-    command: List[str], cwd: Optional[str] = None, env: Optional[Dict[str, str]] = None
-) -> subprocess.CompletedProcess:
+class CheckStatus(Enum):
+    """Status of a quality check."""
+
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+@dataclass
+class CheckResult:
+    """Result of a code quality check."""
+
+    name: str
+    status: CheckStatus
+    details: str
+
+
+@dataclass
+class CommandResult:
+    """Result of a command execution."""
+
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+def run_command(command: List[str], cwd: Optional[str] = None) -> CommandResult:
     """
     Run a command and return the result.
 
     Args:
-        command: Command to run as a list of strings
-        cwd: Working directory to run the command in
-        env: Environment variables to set
+        command: Command to run
+        cwd: Working directory
 
     Returns:
-        CompletedProcess instance with return code, stdout, and stderr
+        Result of the command execution
     """
-    logger.info(f"Running command: {' '.join(command)}")
-    result = subprocess.run(command, capture_output=True, text=True, cwd=cwd, env=env)
-    return result
+    try:
+        result = subprocess.run(
+            command, cwd=cwd, capture_output=True, text=True, check=False
+        )
+        return CommandResult(
+            returncode=result.returncode, stdout=result.stdout, stderr=result.stderr
+        )
+    except Exception as e:
+        return CommandResult(returncode=1, stdout="", stderr=str(e))
 
 
 def format_result_output(name: str, status: str, details: str = "") -> str:
@@ -96,46 +128,30 @@ def format_result_output(name: str, status: str, details: str = "") -> str:
     return result
 
 
-def print_rich_result(name: str, status: str, details: str = "") -> None:
+def print_rich_result(result: CheckResult) -> None:
     """
-    Print a check result with rich formatting.
+    Print a rich formatted check result.
 
     Args:
-        name: Name of the check
-        status: Status of the check (PASSED, FAILED, SKIPPED)
-        details: Details about the check result
+        result: Check result to print
     """
-    if status == "PASSED":
-        status_style = "success"
-        icon = "✓"
-    elif status == "FAILED":
-        status_style = "error"
-        icon = "✗"
+    if result.status == CheckStatus.PASSED:
+        title = f"✓ {result.name}: PASSED"
+        style = "green"
+    elif result.status == CheckStatus.FAILED:
+        title = f"✗ {result.name}: FAILED"
+        style = "red"
     else:
-        status_style = "skipped"
-        icon = "⚠"
+        title = f"⚠ {result.name}: SKIPPED"
+        style = "yellow"
 
-    # Create a panel for each check result
-    text = Text()
-    text.append(f"{icon} {name}: ", style="bold")
-    text.append(status, style=status_style)
-
-    if details:
-        # Use markup directly with the console instead of creating a Text object
-        panel = Panel(
-            details.strip(),  # Pass the string directly to allow markup processing
-            title=text,
-            border_style=status_style,
-            expand=False,
-        )
-        console.print(panel)
-    else:
-        console.print(text)
+    panel = Panel(result.details, title=title, title_align="left", border_style=style)
+    console.print(panel)
 
 
 def create_summary_table(passed: int, failed: int, skipped: int) -> Table:
     """
-    Create a rich table for the summary.
+    Create a summary table for check results.
 
     Args:
         passed: Number of passed checks
@@ -143,15 +159,15 @@ def create_summary_table(passed: int, failed: int, skipped: int) -> Table:
         skipped: Number of skipped checks
 
     Returns:
-        Rich Table object
+        A rich table with the summary
     """
-    table = Table(title="Pipeline Summary", show_header=True, show_lines=True)
+    table = Table(show_header=True, header_style="bold", box=None)
     table.add_column("Status", style="bold")
     table.add_column("Count")
     table.add_column("Symbol")
 
-    table.add_row("PASSED", f"[success]{passed}[/success]", "✓")
-    table.add_row("FAILED", f"[error]{failed}[/error]", "✗")
-    table.add_row("SKIPPED", f"[skipped]{skipped}[/skipped]", "⚠")
+    table.add_row("PASSED", str(passed), "✓", style="green")
+    table.add_row("FAILED", str(failed), "✗", style="red")
+    table.add_row("SKIPPED", str(skipped), "⚠", style="yellow")
 
     return table

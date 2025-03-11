@@ -24,12 +24,13 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_initialization(self):
         """Test initializing the pipeline."""
-        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain, \
-             patch("src.code_quality.chain_pipeline.configparser.ConfigParser") as mock_config:
+        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain, patch(
+            "src.code_quality.chain_pipeline.configparser.ConfigParser"
+        ) as mock_config:
             # Create mock instances
             mock_chain_instance = MagicMock()
             mock_chain.return_value = mock_chain_instance
-            
+
             # Mock config
             mock_config_instance = MagicMock()
             mock_config.return_value = mock_config_instance
@@ -50,19 +51,33 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_build_check_chain(self):
         """Test building the check chain."""
-        with patch("src.code_quality.chain_pipeline.FormattingCheck") as mock_formatting, \
-             patch("src.code_quality.chain_pipeline.ImportsCheck") as mock_imports, \
-             patch("src.code_quality.chain_pipeline.LintingCheck") as mock_linting, \
-             patch("src.code_quality.chain_pipeline.RuffCheck") as mock_ruff, \
-             patch("src.code_quality.chain_pipeline.TypeCheckingLink") as mock_type, \
-             patch("src.code_quality.chain_pipeline.SecurityCheckLink") as mock_security, \
-             patch("src.code_quality.chain_pipeline.TestCoverageCheck") as mock_coverage, \
-             patch("src.code_quality.chain_pipeline.NamingConventionsCheck") as mock_naming, \
-             patch("src.code_quality.chain_pipeline.FileLengthCheck") as mock_file_length, \
-             patch("src.code_quality.chain_pipeline.FunctionLengthCheck") as mock_func_length, \
-             patch("src.code_quality.chain_pipeline.DocstringCheck") as mock_docstring, \
-             patch("src.code_quality.chain_pipeline.DependencyCheck") as mock_dependency, \
-             patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain_class:
+        with patch(
+            "src.code_quality.chain_pipeline.FormattingCheck"
+        ) as mock_formatting, patch(
+            "src.code_quality.chain_pipeline.ImportsCheck"
+        ) as mock_imports, patch(
+            "src.code_quality.chain_pipeline.LintingCheck"
+        ) as mock_linting, patch(
+            "src.code_quality.chain_pipeline.RuffCheck"
+        ) as mock_ruff, patch(
+            "src.code_quality.chain_pipeline.TypeCheckingLink"
+        ) as mock_type, patch(
+            "src.code_quality.chain_pipeline.SecurityCheckLink"
+        ) as mock_security, patch(
+            "src.code_quality.chain_pipeline.TestCoverageCheck"
+        ) as mock_coverage, patch(
+            "src.code_quality.chain_pipeline.NamingConventionsCheck"
+        ) as mock_naming, patch(
+            "src.code_quality.chain_pipeline.FileLengthCheck"
+        ) as mock_file_length, patch(
+            "src.code_quality.chain_pipeline.FunctionLengthCheck"
+        ) as mock_func_length, patch(
+            "src.code_quality.chain_pipeline.DocstringCheck"
+        ) as mock_docstring, patch(
+            "src.code_quality.chain_pipeline.DependencyCheck"
+        ) as mock_dependency, patch(
+            "src.code_quality.chain_pipeline.CheckChain"
+        ) as mock_chain_class:
 
             # Create mock chain
             mock_chain = MagicMock()
@@ -118,9 +133,13 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_run(self):
         """Test running the pipeline."""
-        with patch("src.code_quality.chain_pipeline.CheckChain") as mock_chain_class, \
-             patch("src.code_quality.chain_pipeline.Console") as mock_console_class, \
-             patch("src.code_quality.chain_pipeline.subprocess.run") as mock_subprocess_run:
+        with patch(
+            "src.code_quality.chain_pipeline.CheckChain"
+        ) as mock_chain_class, patch(
+            "src.code_quality.chain_pipeline.Console"
+        ) as mock_console_class, patch(
+            "src.code_quality.chain_pipeline.subprocess.run"
+        ) as mock_subprocess_run:
 
             # Mock subprocess run for _check_prerequisites
             mock_subprocess_run.return_value.returncode = 0
@@ -144,10 +163,10 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
             # Initialize and run the pipeline
             pipeline = CodeQualityChainPipeline(self.project_path)
-            
+
             # Override config for test
             pipeline.config = {"src_dirs": "src,app"}
-            
+
             result = pipeline.run()
 
             # Check that the chain was executed with the correct context
@@ -173,8 +192,11 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_print_summary(self):
         """Test printing the pipeline summary."""
-        with patch("src.code_quality.chain_pipeline.create_summary_table") as mock_create_table, \
-             patch("src.code_quality.chain_pipeline.Console") as mock_console_class:
+        with patch(
+            "src.code_quality.chain_pipeline.create_summary_table"
+        ) as mock_create_table, patch(
+            "src.code_quality.chain_pipeline.Console"
+        ) as mock_console_class:
 
             # Create mock instances
             mock_console = MagicMock()
