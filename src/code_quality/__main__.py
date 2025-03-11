@@ -4,12 +4,11 @@ Main entry point for the code quality tool.
 
 import logging
 import sys
-from typing import List
 
 from .chain_pipeline import main as chain_main
 
 
-def main():
+def main() -> int:
     """
     Execute the code quality checks.
 

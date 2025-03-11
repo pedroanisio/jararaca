@@ -5,7 +5,6 @@ This module contains the TypeCheckingLink class which verifies that Python code
 passes mypy's type checking.
 """
 
-import os
 from typing import Any, Dict, List
 
 from ..chain import CheckLink

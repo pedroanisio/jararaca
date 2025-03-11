@@ -3,17 +3,14 @@ Utility functions and classes for code quality checks.
 """
 
 import logging
-import os
 import subprocess
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import List, Optional, Union
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 from rich.theme import Theme
 
 # Configure logging
@@ -128,18 +125,22 @@ def format_result_output(name: str, status: str, details: str = "") -> str:
     return result
 
 
-def print_rich_result(title_or_result, status=None, details=None) -> None:
+def print_rich_result(
+    title_or_result: Union[str, CheckResult], 
+    status: Optional[CheckStatus] = None, 
+    details: Optional[str] = None
+) -> None:
     """
     Print a rich formatted check result.
 
     This function can be called in two ways:
     1. With a single CheckResult object: print_rich_result(result)
     2. With separate parameters: print_rich_result(title, status, details)
-
+    
     Args:
-        title_or_result: Either a CheckResult object or the title string
-        status: Status string (PASSED, FAILED, SKIPPED) - optional if title_or_result is a CheckResult
-        details: Detailed message to display - optional if title_or_result is a CheckResult
+        title_or_result: Either a CheckResult object or a string title
+        status: Status of the check, used if title_or_result is a string
+        details: Details of the check, used if title_or_result is a string
     """
     if isinstance(title_or_result, CheckResult):
         result = title_or_result

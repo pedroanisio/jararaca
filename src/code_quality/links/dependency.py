@@ -6,8 +6,7 @@ This module provides a check that verifies dependencies are up-to-date in requir
 
 import json
 import os
-import subprocess
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus, run_command

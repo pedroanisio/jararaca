@@ -6,7 +6,7 @@ This module provides a check that verifies Python functions do not exceed a maxi
 
 import ast
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus
@@ -85,7 +85,7 @@ class FunctionLengthCheck(CheckLink):
                 CheckResult(
                     name=self.name,
                     status=CheckStatus.FAILED,
-                    message="No project path provided",
+                    details="No project path provided",
                 )
             ]
 

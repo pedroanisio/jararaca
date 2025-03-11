@@ -5,7 +5,6 @@ This module contains the FormattingCheck class which verifies that Python code
 is properly formatted according to Black's standards.
 """
 
-import os
 from typing import Any, Dict, List
 
 from ..chain import CheckLink
@@ -35,14 +34,16 @@ class FormattingCheck(CheckLink):
         """
         project_path = context.get("project_path", ".")
         source_dirs = context.get("source_dirs", ["src"])
-        
+
         # Skip the check if no source directories exist
         if not source_dirs:
-            return [CheckResult(
-                self.name, 
-                CheckStatus.SKIPPED, 
-                "No source directories found to check."
-            )]
+            return [
+                CheckResult(
+                    self.name,
+                    CheckStatus.SKIPPED,
+                    "No source directories found to check.",
+                )
+            ]
 
         # Build the command to run black in check mode
         command = ["black", "--check"]

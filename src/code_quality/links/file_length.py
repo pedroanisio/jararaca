@@ -4,6 +4,7 @@ File Length Check implementation for Python code.
 This module provides a check that verifies Python files do not exceed a maximum length.
 """
 
+import logging
 import os
 from typing import Any, Dict, List
 
@@ -69,7 +70,9 @@ class FileLengthCheck(CheckLink):
                             long_files.append((file_path, line_count))
                     except Exception as e:
                         # If we can't read the file, we'll consider it a failure
+                        # Use a string message with 'Error:' to maintain backward compatibility with tests
                         long_files.append((file_path, f"Error: {str(e)}"))
+                        logging.error(f"Error reading {file_path}: {str(e)}")
 
         # Determine the status based on long files found
         if long_files:

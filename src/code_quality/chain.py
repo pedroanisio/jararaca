@@ -8,7 +8,7 @@ Each check is a separate link in the chain, and they can be executed sequentiall
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from .utils import CheckResult, CheckStatus
+from .utils import CheckResult
 
 
 class CheckLink(ABC):
@@ -82,7 +82,7 @@ class CheckChain:
     A chain of code quality checks that can be executed sequentially.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty chain of checks."""
         self.head: Optional[CheckLink] = None
         self.tail: Optional[CheckLink] = None
@@ -101,7 +101,9 @@ class CheckChain:
             self.head = link
             self.tail = link
         else:
-            self.tail.set_next(link)
+            # Ensure tail is not None before calling set_next
+            if self.tail is not None:
+                self.tail.set_next(link)
             self.tail = link
 
         return self

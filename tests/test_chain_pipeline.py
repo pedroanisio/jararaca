@@ -4,7 +4,7 @@ Tests for the Code Quality Chain Pipeline implementation.
 
 import os
 import unittest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 from code_quality.chain import CheckChain
 from code_quality.chain_pipeline import CodeQualityChainPipeline, main
@@ -145,7 +145,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
             # Mock subprocess run for _check_prerequisites
             mock_subprocess_run.return_value.returncode = 0
-            
+
             # Mock directory existence checks
             mock_exists.return_value = True
             mock_isdir.return_value = True
@@ -359,7 +359,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
             # Mock directory existence checks
             mock_exists.return_value = True
             mock_isdir.return_value = True
-            
+
             # Mock subprocess run for _check_prerequisites
             mock_subprocess_run.return_value.returncode = 0
 
@@ -386,7 +386,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
             # Check that json.dump was called with the expected data
             mock_json_dump.assert_called_once()
             args, _ = mock_json_dump.call_args
-            
+
             # Check the structure of the JSON output
             json_data = args[0]
             self.assertEqual(json_data["summary"]["passed"], 1)
@@ -394,7 +394,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
             self.assertEqual(json_data["summary"]["skipped"], 1)
             self.assertEqual(json_data["summary"]["total"], 3)
             self.assertEqual(json_data["summary"]["status"], "FAILED")
-            
+
             # Check each check's data
             self.assertEqual(len(json_data["checks"]), 3)
             self.assertEqual(json_data["checks"][0]["name"], "Test 1")

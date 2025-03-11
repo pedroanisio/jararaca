@@ -7,7 +7,7 @@ follows PEP 8 naming conventions.
 
 import os
 import re
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus

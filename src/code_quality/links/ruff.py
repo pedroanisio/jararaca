@@ -5,7 +5,6 @@ This module contains the RuffCheck class which verifies that Python code
 passes Ruff's code quality checks.
 """
 
-import os
 from typing import Any, Dict, List
 
 from ..chain import CheckLink

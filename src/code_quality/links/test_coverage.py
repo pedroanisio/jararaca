@@ -5,7 +5,6 @@ This module contains the TestCoverageCheck class which verifies that Python code
 has adequate test coverage.
 """
 
-import os
 import re
 from typing import Any, Dict, List, Optional
 

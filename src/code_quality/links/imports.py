@@ -5,7 +5,6 @@ This module contains the ImportsCheck class which verifies that Python imports
 are properly sorted according to isort's standards.
 """
 
-import os
 from typing import Any, Dict, List
 
 from ..chain import CheckLink

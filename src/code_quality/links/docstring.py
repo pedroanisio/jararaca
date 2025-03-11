@@ -6,7 +6,7 @@ This module provides a check that verifies Python modules, classes, and function
 
 import ast
 import os
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus
@@ -17,7 +17,7 @@ class DocstringVisitor(ast.NodeVisitor):
 
     def __init__(self, skip_private: bool = True):
         """Initialize the docstring visitor."""
-        self.missing_docstrings = []
+        self.missing_docstrings: List[Tuple[str, str, int]] = []  # (type, name, line_number)
         self.skip_private = skip_private
         self.has_module_docstring = False
 

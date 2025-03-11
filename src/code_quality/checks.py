@@ -8,8 +8,7 @@ for specific code quality checks that can be chained together.
 import ast
 import os
 import re
-import subprocess
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from .chain import CheckLink
 from .utils import CheckResult, CheckStatus, print_rich_result, run_command

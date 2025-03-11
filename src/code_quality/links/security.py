@@ -5,7 +5,6 @@ This module contains the SecurityCheckLink class which verifies that Python code
 is free from common security issues using Bandit.
 """
 
-import os
 from typing import Any, Dict, List
 
 from ..chain import CheckLink
