@@ -1,0 +1,9 @@
+pytest
+black
+isort
+flake8
+mypy
+coverage
+bandit
+ruff
+pip-audit

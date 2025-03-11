@@ -1,0 +1,15 @@
+-r requirements.txt
+pytest
+pytest-cov
+black
+isort
+flake8
+mypy
+bandit
+ruff
+pip-audit
+pre-commit
+sphinx
+sphinx-rtd-theme
+twine
+build 
