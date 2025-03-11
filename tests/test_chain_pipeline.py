@@ -6,9 +6,9 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.chain import CheckChain
-from src.code_quality.chain_pipeline import CodeQualityChainPipeline, main
-from src.code_quality.utils import CheckResult, CheckStatus
+from code_quality.chain import CheckChain
+from code_quality.chain_pipeline import CodeQualityChainPipeline, main
+from code_quality.utils import CheckResult, CheckStatus
 
 
 class TestCodeQualityChainPipeline(unittest.TestCase):

@@ -44,7 +44,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "code-quality=code_quality.pipeline:main",
+            "code-quality=code_quality.chain_pipeline:main",
         ],
     },
 )

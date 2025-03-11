@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.ruff import RuffCheck
-from src.code_quality.utils import CheckResult, CheckStatus
+from code_quality.links.ruff import RuffCheck
+from code_quality.utils import CheckResult, CheckStatus
 
 
 class TestRuffCheck(unittest.TestCase):

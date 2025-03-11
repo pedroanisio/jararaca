@@ -8,8 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.docstring import DocstringCheck, DocstringVisitor
-from src.code_quality.utils import CheckStatus
+from code_quality.links.docstring import DocstringCheck, DocstringVisitor
+from code_quality.utils import CheckStatus
 
 
 class TestDocstringCheck(unittest.TestCase):

@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.type_checking import TypeCheckingLink
-from src.code_quality.utils import CheckStatus, CommandResult
+from code_quality.links.type_checking import TypeCheckingLink
+from code_quality.utils import CheckStatus, CommandResult
 
 
 class TestTypeCheckingLink(unittest.TestCase):

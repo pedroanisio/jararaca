@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.security import SecurityCheckLink
-from src.code_quality.utils import CheckResult, CheckStatus
+from code_quality.links.security import SecurityCheckLink
+from code_quality.utils import CheckResult, CheckStatus
 
 
 class TestSecurityCheckLink(unittest.TestCase):

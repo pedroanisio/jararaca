@@ -8,8 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.dependency import DependencyCheck
-from src.code_quality.utils import CheckStatus, CommandResult
+from code_quality.links.dependency import DependencyCheck
+from code_quality.utils import CheckStatus, CommandResult
 
 
 class TestDependencyCheck(unittest.TestCase):

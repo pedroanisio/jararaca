@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.imports import ImportsCheck
-from src.code_quality.utils import CheckResult, CheckStatus
+from code_quality.links.imports import ImportsCheck
+from code_quality.utils import CheckResult, CheckStatus
 
 
 class TestImportsCheck(unittest.TestCase):

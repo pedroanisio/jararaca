@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.formatting import FormattingCheck
-from src.code_quality.utils import CheckResult, CheckStatus
+from code_quality.links.formatting import FormattingCheck
+from code_quality.utils import CheckResult, CheckStatus
 
 
 class TestFormattingCheck(unittest.TestCase):

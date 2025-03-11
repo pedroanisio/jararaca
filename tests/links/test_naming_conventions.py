@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from src.code_quality.links.naming_conventions import NamingConventionsCheck
-from src.code_quality.utils import CheckStatus
+from code_quality.links.naming_conventions import NamingConventionsCheck
+from code_quality.utils import CheckStatus
 
 
 class TestNamingConventionsCheck(unittest.TestCase):

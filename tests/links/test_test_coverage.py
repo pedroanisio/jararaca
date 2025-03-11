@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.test_coverage import TestCoverageCheck
-from src.code_quality.utils import CheckStatus, CommandResult
+from code_quality.links.test_coverage import TestCoverageCheck
+from code_quality.utils import CheckStatus, CommandResult
 
 
 class TestTestCoverageCheck(unittest.TestCase):

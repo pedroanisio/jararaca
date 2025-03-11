@@ -8,8 +8,8 @@ import unittest
 from unittest.mock import mock_open as mock_builtin_open
 from unittest.mock import patch
 
-from src.code_quality.links.file_length import FileLengthCheck
-from src.code_quality.utils import CheckStatus
+from code_quality.links.file_length import FileLengthCheck
+from code_quality.utils import CheckStatus
 
 
 class TestFileLengthCheck(unittest.TestCase):

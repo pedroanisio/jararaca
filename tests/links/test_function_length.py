@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from src.code_quality.links.function_length import FunctionLengthCheck
-from src.code_quality.utils import CheckResult, CheckStatus
+from code_quality.links.function_length import FunctionLengthCheck
+from code_quality.utils import CheckResult, CheckStatus
 
 
 class TestFunctionLengthCheck(unittest.TestCase):
