@@ -545,33 +545,38 @@ class CodeQualityPipeline:
                     print_rich_result(
                         "Test Coverage",
                         CheckStatus.PASSED.value,
-                        f"Coverage: {coverage_pct}% (min: {min_coverage}%)"
+                        f"Coverage: {coverage_pct}% (min: {min_coverage}%)",
                     )
                     logger.info(f"Coverage check passed: {coverage_pct}%")
                 else:
                     # Parse the coverage report to extract file-specific information
-                    coverage_lines = cov_result.stdout.strip().split('\n')
-                    
+                    coverage_lines = cov_result.stdout.strip().split("\n")
+
                     # Create a more detailed message
                     missing_coverage = []
                     for line in coverage_lines:
-                        if line.startswith('src/') and not line.startswith('TOTAL'):
-                            parts = re.split(r'\s+', line.strip())
+                        if line.startswith("src/") and not line.startswith("TOTAL"):
+                            parts = re.split(r"\s+", line.strip())
                             if len(parts) >= 4:
                                 file_path, stmts, miss, cover = parts[:4]
                                 if int(miss) > 0:  # If there are missing statements
                                     missing_lines = ""
-                                    if len(parts) > 4 and parts[-1].startswith("Missing"):
+                                    if len(parts) > 4 and parts[-1].startswith(
+                                        "Missing"
+                                    ):
                                         missing_lines = f" - Missing lines: {parts[-1].replace('Missing', '').strip()}"
-                                    missing_coverage.append(f"[yellow]{file_path}[/yellow]: {cover} coverage ({miss} statements not covered){missing_lines}")
-                    
+                                    missing_coverage.append(
+                                        f"[yellow]{file_path}[/yellow]: {cover} coverage ({miss} statements not covered){missing_lines}"
+                                    )
+
                     detailed_msg = (
                         f"[bold red]Coverage: {coverage_pct}% below minimum {min_coverage}%[/bold red]\n\n"
                         f"[bold]Files needing more test coverage:[/bold]\n"
-                        + "\n".join(missing_coverage) + "\n\n"
+                        + "\n".join(missing_coverage)
+                        + "\n\n"
                         f"[bold cyan]How to fix:[/bold cyan] Add more unit tests for the files listed above, focusing on the missing lines."
                     )
-                    
+
                     self.results.append(
                         CheckResult(
                             "Test Coverage",
@@ -580,9 +585,7 @@ class CodeQualityPipeline:
                         )
                     )
                     print_rich_result(
-                        "Test Coverage",
-                        CheckStatus.FAILED.value,
-                        detailed_msg
+                        "Test Coverage", CheckStatus.FAILED.value, detailed_msg
                     )
                     logger.error(
                         f"Coverage check failed: {coverage_pct}% < {min_coverage}%"
@@ -598,7 +601,7 @@ class CodeQualityPipeline:
                 print_rich_result(
                     "Test Coverage",
                     CheckStatus.FAILED.value,
-                    f"[bold red]Failed to parse coverage report[/bold red]\n\n{cov_result.stdout}\n\n[bold cyan]How to fix:[/bold cyan] Ensure your tests are running correctly and coverage is being generated."
+                    f"[bold red]Failed to parse coverage report[/bold red]\n\n{cov_result.stdout}\n\n[bold cyan]How to fix:[/bold cyan] Ensure your tests are running correctly and coverage is being generated.",
                 )
                 logger.error("Failed to parse coverage percentage.")
         except Exception as e:
@@ -612,7 +615,7 @@ class CodeQualityPipeline:
             print_rich_result(
                 "Test Coverage",
                 CheckStatus.FAILED.value,
-                f"[bold red]Error checking coverage:[/bold red] {str(e)}\n\n[bold cyan]How to fix:[/bold cyan] Ensure coverage and pytest are installed correctly."
+                f"[bold red]Error checking coverage:[/bold red] {str(e)}\n\n[bold cyan]How to fix:[/bold cyan] Ensure coverage and pytest are installed correctly.",
             )
             logger.exception("Error checking test coverage.")
 
@@ -638,31 +641,89 @@ class CodeQualityPipeline:
     def _check_naming_conventions(self) -> None:
         """Check naming conventions for files, classes, and functions."""
         violations = []
+        file_violations = []
+        class_violations = []
+        func_violations = []
+        
+        # Python keywords that shouldn't be considered violations
+        python_keywords = ['as', 'assert', 'break', 'class', 'continue', 'def', 'del', 'elif', 
+                          'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 
+                          'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 
+                          'return', 'try', 'while', 'with', 'yield', 'methods']
+
         for file_path in self._get_python_files():
             file_name = os.path.basename(file_path)
-            if not re.match(r"^[a-z][a-z0-9_]*\.py$", file_name):
+            # Skip checking special files like __init__.py and __main__.py
+            if not file_name.startswith("__") and not re.match(r"^[a-z][a-z0-9_]*\.py$", file_name):
+                file_violations.append(
+                    f"[yellow]{file_path}[/yellow]: File should be in snake_case"
+                )
                 violations.append(f"File '{file_path}' should be in snake_case.")
             try:
                 with open(file_path, "r") as f:
                     content = f.read()
-                    for cls in re.findall(r"class\s+([A-Za-z0-9_]+)", content):
-                        if not re.match(r"^[A-Z][A-Za-z0-9]*$", cls):
+                    # Find class definitions using more precise regex
+                    for match in re.finditer(r"class\s+([A-Za-z0-9_]+)(?:\s*\(|\s*:)", content):
+                        cls = match.group(1)
+                        # Skip Python keywords and check if class follows PascalCase
+                        if cls not in python_keywords and not re.match(r"^[A-Z][A-Za-z0-9]*$", cls):
+                            class_violations.append(
+                                f"[yellow]{file_path}[/yellow]: Class [red]{cls}[/red] should be in PascalCase"
+                            )
                             violations.append(
                                 f"Class '{cls}' in '{file_path}' should be in PascalCase."
                             )
-                    for func in re.findall(r"def\s+([A-Za-z0-9_]+)", content):
-                        if not re.match(r"^[a-z][a-z0-9_]*$", func):
+                    
+                    # Find function definitions using more precise regex
+                    for match in re.finditer(r"def\s+([A-Za-z0-9_]+)\s*\(", content):
+                        func = match.group(1)
+                        # Skip Python keywords, special methods (__xxx__), and private methods (_xxx)
+                        if (func not in python_keywords and 
+                            not (func.startswith("__") and func.endswith("__")) and 
+                            not func.startswith("_") and 
+                            not re.match(r"^[a-z][a-z0-9_]*$", func)):
+                            func_violations.append(
+                                f"[yellow]{file_path}[/yellow]: Function [red]{func}[/red] should be in snake_case"
+                            )
                             violations.append(
                                 f"Function '{func}' in '{file_path}' should be in snake_case."
                             )
             except Exception as e:
                 violations.append(f"Error checking naming in '{file_path}': {str(e)}")
                 logger.exception(f"Error checking naming conventions in {file_path}")
+        
         if violations:
+            # Build detailed message with sections
+            detailed_msg = "[bold red]Naming convention violations found[/bold red]\n\n"
+            
+            if file_violations:
+                detailed_msg += "[bold]File naming violations:[/bold]\n"
+                detailed_msg += "\n".join(file_violations) + "\n\n"
+            
+            if class_violations:
+                detailed_msg += "[bold]Class naming violations:[/bold]\n"
+                detailed_msg += "\n".join(class_violations) + "\n\n"
+            
+            if func_violations:
+                detailed_msg += "[bold]Function naming violations:[/bold]\n"
+                detailed_msg += "\n".join(func_violations) + "\n\n"
+            
+            detailed_msg += "[bold cyan]How to fix:[/bold cyan]\n"
+            detailed_msg += "- Files should be in snake_case (lowercase with underscores)\n"
+            detailed_msg += "- Classes should be in PascalCase (capitalized words without underscores)\n"
+            detailed_msg += "- Functions should be in snake_case (lowercase with underscores)\n"
+            detailed_msg += "[italic]Note: Special method names (__init__), private methods (_method), " 
+            detailed_msg += "and special files (__init__.py) follow Python conventions and are exempted.[/italic]"
+            
             self.results.append(
                 CheckResult(
                     "Naming Conventions", CheckStatus.FAILED, "\n".join(violations)
                 )
+            )
+            print_rich_result(
+                "Naming Conventions",
+                CheckStatus.FAILED.value,
+                detailed_msg
             )
             logger.error("Naming convention violations found.")
         else:
@@ -673,27 +734,52 @@ class CodeQualityPipeline:
                     "All naming conventions are followed.",
                 )
             )
+            print_rich_result(
+                "Naming Conventions",
+                CheckStatus.PASSED.value,
+                "All naming conventions are followed."
+            )
             logger.info("Naming conventions check passed.")
 
     def _check_file_lengths(self) -> None:
         """Ensure no file exceeds the maximum allowed length."""
         max_length = self.config.getint("general", "max_file_length")
         violations = []
+        detailed_violations = []
+
         for file_path in self._get_python_files():
             try:
                 with open(file_path, "r") as f:
                     lines = f.readlines()
-                    if len(lines) > max_length:
+                    num_lines = len(lines)
+                    if num_lines > max_length:
+                        percent_over = ((num_lines - max_length) / max_length) * 100
                         violations.append(
-                            f"File '{file_path}' has {len(lines)} lines (max {max_length})."
+                            f"File '{file_path}' has {num_lines} lines (max {max_length})."
+                        )
+                        detailed_violations.append(
+                            f"[yellow]{file_path}[/yellow]: [red]{num_lines}[/red] lines (exceeds max of {max_length} by {percent_over:.1f}%)"
                         )
             except Exception as e:
                 violations.append(f"Error checking length of '{file_path}': {str(e)}")
                 logger.exception(f"Error checking file length for {file_path}")
+
         if violations:
+            detailed_msg = (
+                f"[bold red]File length violations found[/bold red]\n\n"
+                f"[bold]Files exceeding maximum length ({max_length} lines):[/bold]\n"
+                + "\n".join(detailed_violations)
+                + "\n\n"
+                f"[bold cyan]How to fix:[/bold cyan]\n"
+                f"- Consider breaking large files into smaller, focused modules\n"
+                f"- Move related helper functions to a separate utility file\n"
+                f"- Review and refactor long files to improve code organization"
+            )
+
             self.results.append(
                 CheckResult("File Lengths", CheckStatus.FAILED, "\n".join(violations))
             )
+            print_rich_result("File Lengths", CheckStatus.FAILED.value, detailed_msg)
             logger.error("File length violations found.")
         else:
             self.results.append(
@@ -703,12 +789,20 @@ class CodeQualityPipeline:
                     f"All files within {max_length} lines.",
                 )
             )
+            print_rich_result(
+                "File Lengths",
+                CheckStatus.PASSED.value,
+                f"All files within {max_length} lines.",
+            )
             logger.info("File length check passed.")
 
     def _check_function_lengths(self) -> None:
         """Ensure no function exceeds the maximum allowed length."""
         max_length = self.config.getint("general", "max_function_length")
         violations = []
+        detailed_violations = []
+        functions_by_file = {}
+
         for file_path in self._get_python_files():
             try:
                 with open(file_path, "r") as f:
@@ -738,21 +832,65 @@ class CodeQualityPipeline:
                                 violations.append(
                                     f"Function '{current_function}' in '{file_path}' has {function_lines} lines (max {max_length})."
                                 )
+
+                                percent_over = (
+                                    (function_lines - max_length) / max_length
+                                ) * 100
+                                detailed_violation = f"[red]{current_function}[/red]: {function_lines} lines (exceeds max by {percent_over:.1f}%)"
+
+                                if file_path not in functions_by_file:
+                                    functions_by_file[file_path] = []
+                                functions_by_file[file_path].append(detailed_violation)
+
                             in_function = False
                 if in_function and function_lines > max_length:
                     violations.append(
                         f"Function '{current_function}' in '{file_path}' has {function_lines} lines (max {max_length})."
                     )
+
+                    percent_over = ((function_lines - max_length) / max_length) * 100
+                    detailed_violation = f"[red]{current_function}[/red]: {function_lines} lines (exceeds max by {percent_over:.1f}%)"
+
+                    if file_path not in functions_by_file:
+                        functions_by_file[file_path] = []
+                    functions_by_file[file_path].append(detailed_violation)
+
             except Exception as e:
                 violations.append(
                     f"Error checking function lengths in '{file_path}': {str(e)}"
                 )
                 logger.exception(f"Error checking function length for {file_path}")
+
         if violations:
+            # Organize detailed message by file
+            detailed_msg = f"[bold red]Function length violations found[/bold red]\n\n"
+
+            for file_path, funcs in functions_by_file.items():
+                file_name = os.path.basename(file_path)
+                detailed_msg += (
+                    f"[bold yellow]{file_name}[/bold yellow] ({file_path}):\n"
+                )
+                for func in funcs:
+                    detailed_msg += f"  • {func}\n"
+                detailed_msg += "\n"
+
+            detailed_msg += f"[bold cyan]How to fix:[/bold cyan]\n"
+            detailed_msg += (
+                "- Break large functions into smaller, focused helper functions\n"
+            )
+            detailed_msg += "- Extract repeated code patterns into reusable functions\n"
+            detailed_msg += (
+                "- Consider using class methods to organize related functionality\n"
+            )
+            detailed_msg += f"- Functions should ideally be less than {max_length} lines for better readability"
+
             self.results.append(
                 CheckResult(
                     "Function Lengths", CheckStatus.FAILED, "\n".join(violations)
                 )
+            )
+            print_rich_result(
+                "Function Lengths", CheckStatus.FAILED.value, detailed_msg
             )
             logger.error("Function length violations found.")
         else:
@@ -762,6 +900,11 @@ class CodeQualityPipeline:
                     CheckStatus.PASSED,
                     f"All functions within {max_length} lines.",
                 )
+            )
+            print_rich_result(
+                "Function Lengths",
+                CheckStatus.PASSED.value,
+                f"All functions within {max_length} lines.",
             )
             logger.info("Function length check passed.")
 
