@@ -217,6 +217,12 @@ class CodeQualityChainPipeline:
 
     def _print_summary(self) -> None:
         """Print a summary of the check results."""
+        # First print detailed results for each check
+        self.console.print("\n      Detailed Check Results      \n")
+        for result in self.results:
+            print_rich_result(result.name, result.status.value, result.details)
+
+        # Then print the summary as before
         passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
         failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
         skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)

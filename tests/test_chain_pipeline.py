@@ -133,9 +133,7 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_run(self):
         """Test running the pipeline."""
-        with patch(
-            "code_quality.chain_pipeline.CheckChain"
-        ) as mock_chain_class, patch(
+        with patch("code_quality.chain_pipeline.CheckChain") as mock_chain_class, patch(
             "code_quality.chain_pipeline.Console"
         ) as mock_console_class, patch(
             "code_quality.chain_pipeline.subprocess.run"
