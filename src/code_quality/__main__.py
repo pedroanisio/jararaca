@@ -7,7 +7,6 @@ import sys
 from typing import List
 
 from .chain_pipeline import main as chain_main
-from .pipeline import main as old_main
 
 
 def main():
@@ -30,14 +29,11 @@ def main():
     # Get command-line arguments
     args = sys.argv[1:]
 
-    # Call the main function with args
-    if "--use-chain" in args:
-        # Remove the --use-chain flag
-        args = [arg for arg in args if arg != "--use-chain"]
-        return chain_main(args)
-    else:
-        # Use the original pipeline for backward compatibility
-        return old_main(args)
+    # Clean up any legacy --use-chain flags which are no longer needed
+    args = [arg for arg in args if arg != "--use-chain"]
+    
+    # Call the chain-based implementation
+    return chain_main(args)
 
 
 if __name__ == "__main__":

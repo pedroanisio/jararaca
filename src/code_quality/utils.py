@@ -128,24 +128,44 @@ def format_result_output(name: str, status: str, details: str = "") -> str:
     return result
 
 
-def print_rich_result(result: CheckResult) -> None:
+def print_rich_result(title_or_result, status=None, details=None) -> None:
     """
     Print a rich formatted check result.
 
+    This function can be called in two ways:
+    1. With a single CheckResult object: print_rich_result(result)
+    2. With separate parameters: print_rich_result(title, status, details)
+
     Args:
-        result: Check result to print
+        title_or_result: Either a CheckResult object or the title string
+        status: Status string (PASSED, FAILED, SKIPPED) - optional if title_or_result is a CheckResult
+        details: Detailed message to display - optional if title_or_result is a CheckResult
     """
-    if result.status == CheckStatus.PASSED:
-        title = f"✓ {result.name}: PASSED"
+    if isinstance(title_or_result, CheckResult):
+        result = title_or_result
+        title = result.name
+        status = (
+            result.status.value
+            if isinstance(result.status, CheckStatus)
+            else result.status
+        )
+        details = result.details
+    else:
+        title = title_or_result
+        details = details or ""
+        # status is used as-is
+
+    if status == CheckStatus.PASSED.value:
+        title_display = f"✓ {title}: PASSED"
         style = "green"
-    elif result.status == CheckStatus.FAILED:
-        title = f"✗ {result.name}: FAILED"
+    elif status == CheckStatus.FAILED.value:
+        title_display = f"✗ {title}: FAILED"
         style = "red"
     else:
-        title = f"⚠ {result.name}: SKIPPED"
+        title_display = f"⚠ {title}: SKIPPED"
         style = "yellow"
 
-    panel = Panel(result.details, title=title, title_align="left", border_style=style)
+    panel = Panel(details, title=title_display, title_align="left", border_style=style)
     console.print(panel)
 
 

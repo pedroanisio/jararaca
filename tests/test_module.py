@@ -23,7 +23,7 @@ class TestMain(unittest.TestCase):
         # We can't actually execute the module without side effects,
         # so we'll just check the file structure
 
-    @patch("src.code_quality.pipeline.main")
+    @patch("src.code_quality.chain_pipeline.main")
     def test_module_execution_with_import(self, mock_main):
         """Test that the __main__ module can be imported and simulated."""
         # Instead of trying to execute the module code which has relative imports,
@@ -32,7 +32,7 @@ class TestMain(unittest.TestCase):
             content = f.read()
 
         # Check for the import statement
-        self.assertIn("from .pipeline import main", content)
+        self.assertIn("from .chain_pipeline import main", content)
 
         # Check for the __name__ == "__main__" block
         self.assertIn('if __name__ == "__main__":', content)

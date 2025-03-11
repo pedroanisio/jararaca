@@ -4,25 +4,21 @@ This document provides detailed information about the Jararaca code quality API 
 
 ## Main Classes
 
-### `CodeQualityPipeline`
+### `CodeQualityChainPipeline`
 
-The main class that runs all the quality checks.
+The main class that runs all the quality checks using a chain of responsibility pattern.
 
 ```python
-from code_quality.pipeline import CodeQualityPipeline
+from code_quality import CodeQualityChainPipeline
 
 # Initialize the pipeline
-pipeline = CodeQualityPipeline(
+pipeline = CodeQualityChainPipeline(
     project_path="/path/to/project",
     config_file="/path/to/config.ini"  # Optional
 )
 
 # Run all checks
-all_passed = pipeline.run_all_checks()
-
-# Process branch if checks passed (optional)
-if all_passed:
-    pipeline.process_branch_and_commit()
+all_passed = pipeline.run()
 ```
 
 #### Methods
@@ -42,26 +38,19 @@ Loads configuration from a file or uses defaults.
 Parameters:
 - `config_file`: Path to configuration file
 
-##### `run_all_checks()`
+##### `run()`
 
-Runs all quality checks on the project.
+Runs all quality checks on the project using the chain of checks.
 
 Returns:
 - `bool`: True if all non-skipped checks passed, False otherwise
-
-##### `process_branch_and_commit()`
-
-Processes branch management and commits if all checks passed and auto-commit is enabled.
-
-Returns:
-- `bool`: True if processing was successful, False otherwise
 
 ### `CheckResult`
 
 A data class representing the result of a single check.
 
 ```python
-from code_quality.pipeline import CheckResult, CheckStatus
+from code_quality import CheckResult, CheckStatus
 
 result = CheckResult(
     name="Code Formatting",
@@ -81,7 +70,7 @@ result = CheckResult(
 An enumeration of possible check statuses.
 
 ```python
-from code_quality.pipeline import CheckStatus
+from code_quality import CheckStatus
 
 status = CheckStatus.PASSED
 ```
@@ -108,7 +97,7 @@ Parameters:
 - `cwd`: Directory to run the command in
 
 Returns:
-- `CompletedProcess`: Subprocess result with stdout and stderr
+- A `CommandResult` object with returncode, stdout, and stderr attributes
 
 ### `format_result_output(name, status, details="")`
 
@@ -138,10 +127,9 @@ Returns:
 The package provides a command-line interface that can be used directly.
 
 ```
-code-quality /path/to/project [--config CONFIG] [--auto-commit]
+code-quality /path/to/project [--config CONFIG]
 ```
 
 Arguments:
 - `project_path`: Path to the Python project
-- `--config`: Path to configuration file
-- `--auto-commit`: Enable automatic commit and branch processing 
+- `--config`: Path to configuration file 
