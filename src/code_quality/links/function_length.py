@@ -49,16 +49,18 @@ class FunctionVisitor(ast.NodeVisitor):
         Returns:
             The last line number of the node
         """
+        # Check if node has a lineno attribute
         if not hasattr(node, "lineno"):
             return 0
             
-        max_line = node.lineno
+        max_line: int = node.lineno
         for child in ast.iter_child_nodes(node):
             if hasattr(child, "lineno"):
                 max_line = max(max_line, child.lineno)
                 if hasattr(child, "end_lineno") and child.end_lineno is not None:
                     max_line = max(max_line, child.end_lineno)
-                max_line = max(max_line, self._get_last_line(child))
+                child_last_line = self._get_last_line(child)
+                max_line = max(max_line, child_last_line)
         return max_line
 
 

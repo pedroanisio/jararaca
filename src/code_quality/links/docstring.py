@@ -23,7 +23,9 @@ class DocstringVisitor(ast.NodeVisitor):
 
     def visit_Module(self, node: ast.Module) -> None:
         """Visit a module node and check if it has a docstring."""
-        if not ast.get_docstring(node):
+        if ast.get_docstring(node):
+            self.has_module_docstring = True
+        else:
             # Modules don't have line numbers in AST, use 1 as default
             self.missing_docstrings.append(("module", "__init__", 1))
         # Continue visiting the rest of the module

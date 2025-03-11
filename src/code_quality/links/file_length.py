@@ -6,10 +6,13 @@ This module provides a check that verifies Python files do not exceed a maximum 
 
 import logging
 import os
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, cast
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus
+
+# Define a type alias for the file and line count tuple
+FileLengthEntry = Tuple[str, Union[int, str]]
 
 
 class FileLengthCheck(CheckLink):
@@ -55,8 +58,8 @@ class FileLengthCheck(CheckLink):
             ]
 
         # List to store files exceeding the max length
-        # Tuple contains (file_path, line_count) where line_count can be int or str (for errors)
-        long_files: List[Tuple[str, Union[int, str]]] = []
+        # Each entry is (file_path, line_count) where line_count can be int or str 
+        long_files: List[FileLengthEntry] = []
 
         for source_dir in source_dirs:
             dir_path = os.path.join(project_path, source_dir)
@@ -72,20 +75,29 @@ class FileLengthCheck(CheckLink):
                     try:
                         with open(file_path, "r", encoding="utf-8") as f:
                             lines = f.readlines()
-                            line_count = len(lines)
+                            line_count: int = len(lines)
                             if line_count > self.max_lines:
+                                # Add the file with its line count to our list
                                 long_files.append((file_path, line_count))
                     except Exception as e:
-                        # Use a string message with 'Error:' to maintain backward compatibility with tests
-                        long_files.append((file_path, f"Error: {str(e)}"))
+                        # Use a string for error messages
+                        error_msg: str = f"Error: {str(e)}"
+                        # Add the file with an error message
+                        long_files.append((file_path, error_msg))
                         logging.error(f"Error reading {file_path}: {str(e)}")
 
         # Determine the status based on long files found
         if long_files:
             status = CheckStatus.FAILED
             details = f"Files exceeding the maximum length of {self.max_lines} lines:\n"
-            for file_path, line_count in long_files:
-                details += f"- {file_path}: {line_count} lines\n"
+            
+            # Access tuple elements safely
+            for entry in long_files:
+                # Use our specific type annotation
+                entry_file_path: str = entry[0]
+                # line_count can be int or str, and that's handled by our type alias
+                entry_line_val = entry[1]  
+                details += f"- {entry_file_path}: {entry_line_val} lines\n"
         else:
             status = CheckStatus.PASSED
             details = (
