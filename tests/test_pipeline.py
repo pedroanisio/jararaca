@@ -676,13 +676,13 @@ class BadClass:
 
             # Create the pipeline
             pipeline = CodeQualityPipeline(self.project_path)
-            
+
             # Enable auto commit
             pipeline.config.set("general", "enable_auto_commit", "true")
 
             # Add a failed check result
             pipeline.results = [CheckResult("Test", CheckStatus.FAILED, "Test failed")]
-            
+
             # Mock git commands to simulate a failed merge
             mock_run_command.side_effect = [
                 # branch --show-current
@@ -702,23 +702,31 @@ class BadClass:
                 # git checkout feature-branch (to go back to original branch)
                 MagicMock(returncode=0),
             ]
-            
+
             # Call the method
             result = pipeline.process_branch_and_commit()
-            
+
             # Verify that the result is False because of the failed merge
             self.assertFalse(result)
-            
+
             # Looking at the output, the pipeline calls git merge --abort and git checkout feature-branch
             # after the merge failure, so we need to expect 8 calls, not 6
             self.assertEqual(mock_run_command.call_count, 8)
-            
+
             # When calling run_command, the pipeline includes the project path as a parameter
             # We need to include it in our assertions
-            mock_run_command.assert_any_call(['git', 'branch', '--show-current'], self.project_path)
-            mock_run_command.assert_any_call(['git', 'merge', 'feature-branch'], self.project_path)
-            mock_run_command.assert_any_call(['git', 'merge', '--abort'], self.project_path)
-            mock_run_command.assert_any_call(['git', 'checkout', 'feature-branch'], self.project_path)
+            mock_run_command.assert_any_call(
+                ["git", "branch", "--show-current"], self.project_path
+            )
+            mock_run_command.assert_any_call(
+                ["git", "merge", "feature-branch"], self.project_path
+            )
+            mock_run_command.assert_any_call(
+                ["git", "merge", "--abort"], self.project_path
+            )
+            mock_run_command.assert_any_call(
+                ["git", "checkout", "feature-branch"], self.project_path
+            )
 
     @patch("code_quality.pipeline.run_command")
     def test_process_branch_and_commit_disabled(self, mock_run_command):
