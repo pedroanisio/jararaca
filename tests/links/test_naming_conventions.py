@@ -348,10 +348,10 @@ class NodeVisitor:
 
         # Run the check normally (no mocking) - our implementation should handle AST visitor methods
         context = {"project_path": self.project_path, "source_dirs": ["src"]}
-        
+
         # Execute the check
         results = self.check._execute_check(context)
-        
+
         # Check that the result was created correctly
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].name, "Naming Conventions")
@@ -381,10 +381,10 @@ def _private_function():
             )
 
         context = {"project_path": self.project_path, "source_dirs": ["src"]}
-        
+
         # Execute the check
         results = self.check._execute_check(context)
-        
+
         # Check that the result was created correctly - private methods should be valid
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].name, "Naming Conventions")
@@ -404,7 +404,7 @@ def _private_function():
 # This is a standard __init__.py file
 """
             )
-            
+
         # Create a __main__.py file
         with open(os.path.join(src_dir, "__main__.py"), "w") as f:
             f.write(
@@ -425,17 +425,17 @@ if __name__ == "__main__":
                 if module_name.startswith("__") and module_name.endswith("__"):
                     return []  # No issues for special modules
                 return self.check._check_module_name(module_name, file_path)
-                
+
             mock_check_module.side_effect = side_effect
-            
+
             context = {"project_path": self.project_path, "source_dirs": ["src"]}
-            
+
             # Execute the check
             results = self.check._execute_check(context)
-            
+
             # Verify the check was called
             mock_check_module.assert_called()
-            
+
             # Check that the result was created correctly
             self.assertEqual(len(results), 1)
             self.assertEqual(results[0].name, "Naming Conventions")
@@ -479,10 +479,10 @@ class ProperClass:
             )
 
         context = {"project_path": self.project_path, "source_dirs": ["src"]}
-        
+
         # Execute the check
         results = self.check._execute_check(context)
-        
+
         # Check that the result was created correctly - no false positives from docstrings
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].name, "Naming Conventions")

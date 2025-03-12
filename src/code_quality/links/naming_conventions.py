@@ -33,24 +33,34 @@ class NamingConventionsCheck(CheckLink):
         self.docstring_triple_quote = re.compile(r'""".*?"""', re.DOTALL)
         self.docstring_single_quote = re.compile(r"'''.*?'''", re.DOTALL)
         self.comment_pattern = re.compile(r"#.*$", re.MULTILINE)
-        
+
         # Define patterns for recognized exceptions
         self.ast_visitor_pattern = re.compile(r"^visit_[A-Z][a-zA-Z0-9]*$")
         self.dunder_pattern = re.compile(r"^__[a-z][a-z0-9_]*__$")
-        
+
         # Common words used in docstrings that might cause false positives
         self.common_words = [
-            "for", "which", "from", "class", "definition", "orchestrates", 
-            "contents", "names", "function", "methods", "module", "documentation"
+            "for",
+            "which",
+            "from",
+            "class",
+            "definition",
+            "orchestrates",
+            "contents",
+            "names",
+            "function",
+            "methods",
+            "module",
+            "documentation",
         ]
 
     def _strip_comments_and_docstrings(self, content: str) -> str:
         """
         Remove comments and docstrings from the content.
-        
+
         Args:
             content: The content to process
-            
+
         Returns:
             The content with comments and docstrings removed
         """
@@ -74,11 +84,11 @@ class NamingConventionsCheck(CheckLink):
             A list of naming convention issues found.
         """
         issues = []
-        
+
         # Skip special module names like __init__, __main__
         if module_name.startswith("__") and module_name.endswith("__"):
             return issues
-            
+
         if not self.module_pattern.match(module_name):
             issues.append(
                 f"Module name '{module_name}' in {file_path} does not follow snake_case convention"
@@ -97,10 +107,10 @@ class NamingConventionsCheck(CheckLink):
             A list of naming convention issues found.
         """
         issues = []
-        
+
         # Remove docstrings and comments to avoid false positives
         cleaned_content = self._strip_comments_and_docstrings(content)
-        
+
         # Use a more specific pattern that matches 'class name:' or 'class name('
         class_pattern = re.compile(r"class\s+([A-Za-z0-9_]+)[\s\(:]")
         for match in class_pattern.finditer(cleaned_content):
@@ -108,7 +118,7 @@ class NamingConventionsCheck(CheckLink):
             # Skip common words that might appear in docstrings
             if class_name.lower() in self.common_words:
                 continue
-                
+
             if not self.class_pattern.match(class_name):
                 issues.append(
                     f"Class name '{class_name}' in {file_path} does not follow PascalCase convention"
@@ -127,15 +137,15 @@ class NamingConventionsCheck(CheckLink):
             A list of naming convention issues found.
         """
         issues = []
-        
+
         # Remove docstrings and comments to avoid false positives
         cleaned_content = self._strip_comments_and_docstrings(content)
-        
+
         # Use a more specific pattern that matches 'def name(' or 'def name:'
         function_pattern = re.compile(r"def\s+([A-Za-z0-9_]+)[\s\(:]")
         for match in function_pattern.finditer(cleaned_content):
             function_name = match.group(1)
-            
+
             # Skip special methods and recognized naming patterns
             if self.dunder_pattern.match(function_name):
                 continue
@@ -145,11 +155,11 @@ class NamingConventionsCheck(CheckLink):
                 # For private methods, check if rest follows snake_case
                 if self.function_pattern.match(function_name[1:]):
                     continue
-            
+
             # Skip common words that might appear in docstrings
             if function_name.lower() in self.common_words:
                 continue
-                    
+
             if not self.function_pattern.match(function_name):
                 issues.append(
                     f"Function name '{function_name}' in {file_path} does not follow snake_case convention"
@@ -168,21 +178,37 @@ class NamingConventionsCheck(CheckLink):
             A list of naming convention issues found.
         """
         issues = []
-        
+
         # Remove docstrings and comments to avoid false positives
         cleaned_content = self._strip_comments_and_docstrings(content)
-        
+
         # Find variable assignments
         # This is simplified and may not catch all variable names
         variable_pattern = re.compile(r"([A-Za-z][A-Za-z0-9_]*)\s*=")
         for match in variable_pattern.finditer(cleaned_content):
             variable_name = match.group(1)
-            
+
             # Skip Python keywords and common pattern variables
-            if variable_name in [
-                "self", "cls", "True", "False", "None", 
-                "import", "from", "as", "class", "def", "for", "if", "return", "yield"
-            ] or variable_name.lower() in self.common_words:
+            if (
+                variable_name
+                in [
+                    "self",
+                    "cls",
+                    "True",
+                    "False",
+                    "None",
+                    "import",
+                    "from",
+                    "as",
+                    "class",
+                    "def",
+                    "for",
+                    "if",
+                    "return",
+                    "yield",
+                ]
+                or variable_name.lower() in self.common_words
+            ):
                 continue
 
             # Check if it's a constant (all uppercase)

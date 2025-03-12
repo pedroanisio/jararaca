@@ -91,6 +91,33 @@ class CodeQualityChainPipeline:
 
         return chain
 
+    def _validate_source_directories(self) -> List[str]:
+        """
+        Validate source directories and filter out non-existent ones.
+
+        Returns:
+            A list of valid source directories
+        """
+        all_src_dirs = [
+            dir.strip() for dir in self.config.get("src_dirs", "src,app").split(",")
+        ]
+
+        # Filter out directories that don't exist
+        src_dirs = []
+        for dir_path in all_src_dirs:
+            full_path = os.path.join(self.project_path, dir_path)
+            if os.path.exists(full_path) and os.path.isdir(full_path):
+                src_dirs.append(dir_path)
+            else:
+                logging.warning(
+                    f"Source directory '{dir_path}' does not exist, skipping."
+                )
+
+        if not src_dirs:
+            logging.warning("No valid source directories found. Some checks may fail.")
+
+        return src_dirs
+
     def run(self) -> bool:
         """
         Run all code quality checks.
@@ -110,25 +137,10 @@ class CodeQualityChainPipeline:
         # Check if all required tools are installed
         check_prerequisites(self.console)
 
+        # Validate source directories
+        src_dirs = self._validate_source_directories()
+
         # Create context for the checks
-        all_src_dirs = [
-            dir.strip() for dir in self.config.get("src_dirs", "src,app").split(",")
-        ]
-
-        # Filter out directories that don't exist
-        src_dirs = []
-        for dir_path in all_src_dirs:
-            full_path = os.path.join(self.project_path, dir_path)
-            if os.path.exists(full_path) and os.path.isdir(full_path):
-                src_dirs.append(dir_path)
-            else:
-                logging.warning(
-                    f"Source directory '{dir_path}' does not exist, skipping."
-                )
-
-        if not src_dirs:
-            logging.warning("No valid source directories found. Some checks may fail.")
-
         context = {
             "project_path": self.project_path,
             "source_dirs": src_dirs,
@@ -159,15 +171,15 @@ class CodeQualityChainPipeline:
         save_json_output(json_output, json_file, self.console)
 
 
-def main(args: Optional[List[str]] = None) -> int:
+def _parse_arguments(args: Optional[List[str]] = None) -> ArgumentParser:
     """
-    Main entry point for the code quality pipeline.
+    Parse command line arguments for the code quality pipeline.
 
     Args:
-        args: Command line arguments.
+        args: Command line arguments
 
     Returns:
-        0 if all checks passed, 1 if checks failed, 2 if an exception occurred.
+        Parsed arguments
     """
     parser = ArgumentParser(description="Run code quality checks on a Python project.")
     parser.add_argument(
@@ -186,7 +198,20 @@ def main(args: Optional[List[str]] = None) -> int:
         dest="json_output",
     )
 
-    parsed_args = parser.parse_args(args)
+    return parser.parse_args(args)
+
+
+def main(args: Optional[List[str]] = None) -> int:
+    """
+    Main entry point for the code quality pipeline.
+
+    Args:
+        args: Command line arguments.
+
+    Returns:
+        0 if all checks passed, 1 if checks failed, 2 if an exception occurred.
+    """
+    parsed_args = _parse_arguments(args)
 
     try:
         # Initialize and run the pipeline

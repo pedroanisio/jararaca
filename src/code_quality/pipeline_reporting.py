@@ -55,6 +55,77 @@ def print_summary(console: Any, results: List[CheckResult]) -> None:
     )
 
 
+def _create_metadata(project_path: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Create metadata section for the JSON output.
+
+    Args:
+        project_path: Path to the project being checked
+        config: Configuration dictionary
+
+    Returns:
+        Dictionary containing metadata information
+    """
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "project_path": project_path,
+        "configuration": config,
+        "version": "1.0",  # Version of the JSON format
+    }
+
+
+def _create_summary(results: List[CheckResult]) -> Dict[str, Any]:
+    """
+    Create summary section for the JSON output.
+
+    Args:
+        results: List of check results
+
+    Returns:
+        Dictionary containing summary information
+    """
+    # Count results by status
+    passed = sum(1 for r in results if r.status == CheckStatus.PASSED)
+    failed = sum(1 for r in results if r.status == CheckStatus.FAILED)
+    skipped = sum(1 for r in results if r.status == CheckStatus.SKIPPED)
+
+    return {
+        "passed": passed,
+        "failed": failed,
+        "skipped": skipped,
+        "total": len(results),
+        "status": "PASSED" if failed == 0 else "FAILED",
+    }
+
+
+def _format_check_details(results: List[CheckResult]) -> List[Dict[str, Any]]:
+    """
+    Format the details of each check result.
+
+    Args:
+        results: List of check results
+
+    Returns:
+        List of dictionaries containing details for each check
+    """
+    checks = []
+
+    for result in results:
+        # Parse the details to extract more structured information when possible
+        details_obj = parse_details(result.name, result.details)
+
+        check_info = {
+            "name": result.name,
+            "status": result.status.value,
+            "raw_details": result.details,  # Always include the raw details
+            "details": details_obj,  # Add structured details when available
+        }
+
+        checks.append(check_info)
+
+    return checks
+
+
 def results_to_json(
     results: List[CheckResult], project_path: str, config: Dict[str, Any]
 ) -> Dict[str, Any]:
@@ -69,42 +140,12 @@ def results_to_json(
     Returns:
         A dictionary with the structured JSON representation of results
     """
-    # Count results by status
-    passed = sum(1 for r in results if r.status == CheckStatus.PASSED)
-    failed = sum(1 for r in results if r.status == CheckStatus.FAILED)
-    skipped = sum(1 for r in results if r.status == CheckStatus.SKIPPED)
-
-    # Create the JSON structure with metadata
+    # Create the JSON structure with metadata, summary, and check details
     json_output: Dict[str, Any] = {
-        "metadata": {
-            "timestamp": datetime.now().isoformat(),
-            "project_path": project_path,
-            "configuration": config,
-            "version": "1.0",  # Version of the JSON format
-        },
-        "summary": {
-            "passed": passed,
-            "failed": failed,
-            "skipped": skipped,
-            "total": len(results),
-            "status": "PASSED" if failed == 0 else "FAILED",
-        },
-        "checks": [],  # This will be a list of check results
+        "metadata": _create_metadata(project_path, config),
+        "summary": _create_summary(results),
+        "checks": _format_check_details(results),
     }
-
-    # Add detailed information for each check
-    for result in results:
-        # Parse the details to extract more structured information when possible
-        details_obj = parse_details(result.name, result.details)
-
-        check_info = {
-            "name": result.name,
-            "status": result.status.value,
-            "raw_details": result.details,  # Always include the raw details
-            "details": details_obj,  # Add structured details when available
-        }
-
-        json_output["checks"].append(check_info)
 
     return json_output
 

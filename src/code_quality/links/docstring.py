@@ -122,6 +122,44 @@ class DocstringCheck(CheckLink):
         super().__init__("Docstring Check")
         self.skip_private = skip_private
         self.skip_test_files = skip_test_files
+        
+    def _process_python_file(self, file_path: str) -> List[Tuple[str, str, int]]:
+        """
+        Process a Python file to find missing docstrings.
+        
+        Args:
+            file_path: Path to the Python file to process
+            
+        Returns:
+            List of tuples containing (file_path, element_description, line_number)
+        """
+        missing_docstrings = []
+        
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            tree = ast.parse(content, filename=file_path)
+            visitor = DocstringVisitor(skip_private=self.skip_private)
+            visitor.visit(tree)
+
+            for element_type, name, line_no in visitor.missing_docstrings:
+                if element_type == "module":
+                    missing_docstrings.append(
+                        (file_path, "module", line_no)
+                    )
+                else:
+                    missing_docstrings.append(
+                        (file_path, f"{element_type} '{name}'", line_no)
+                    )
+        except SyntaxError as e:
+            missing_docstrings.append(
+                (file_path, f"Syntax error: {str(e)}", 0)
+            )
+        except Exception as e:
+            missing_docstrings.append((file_path, f"Error: {str(e)}", 0))
+            
+        return missing_docstrings
 
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
@@ -140,11 +178,13 @@ class DocstringCheck(CheckLink):
 
         missing_docstrings = []
 
+        # Process each source directory
         for source_dir in source_dirs:
             dir_path = os.path.join(project_path, source_dir)
             if not os.path.exists(dir_path):
                 continue
 
+            # Walk through directory and process each Python file
             for root, _, files in os.walk(dir_path):
                 for file in files:
                     if not file.endswith(".py"):
@@ -156,30 +196,9 @@ class DocstringCheck(CheckLink):
                         continue
 
                     file_path = os.path.join(root, file)
-                    try:
-                        with open(file_path, "r", encoding="utf-8") as f:
-                            content = f.read()
+                    missing_docstrings.extend(self._process_python_file(file_path))
 
-                        tree = ast.parse(content, filename=file_path)
-                        visitor = DocstringVisitor(skip_private=self.skip_private)
-                        visitor.visit(tree)
-
-                        for element_type, name, line_no in visitor.missing_docstrings:
-                            if element_type == "module":
-                                missing_docstrings.append(
-                                    (file_path, "module", line_no)
-                                )
-                            else:
-                                missing_docstrings.append(
-                                    (file_path, f"{element_type} '{name}'", line_no)
-                                )
-                    except SyntaxError as e:
-                        missing_docstrings.append(
-                            (file_path, f"Syntax error: {str(e)}", 0)
-                        )
-                    except Exception as e:
-                        missing_docstrings.append((file_path, f"Error: {str(e)}", 0))
-
+        # Generate result based on findings
         if missing_docstrings:
             status = CheckStatus.FAILED
             details = "Missing docstrings found:\n"

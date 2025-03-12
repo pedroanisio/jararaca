@@ -7,7 +7,31 @@ This module handles checking for required tools and dependencies.
 import logging
 import subprocess
 import sys
-from typing import Any, List
+from typing import Any, List, Tuple
+
+
+def _check_tool_availability(tool: str) -> bool:
+    """
+    Check if a specific tool is available in the system.
+
+    Args:
+        tool: Name of the tool to check
+
+    Returns:
+        True if the tool is available, False otherwise
+    """
+    cmd = ["which", tool] if sys.platform != "win32" else ["where", tool]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            logging.info(f"Tool found: {tool}")
+            return True
+        else:
+            logging.warning(f"Tool not found: {tool}")
+            return False
+    except Exception as e:
+        logging.error(f"Error checking for tool {tool}: {str(e)}")
+        return False
 
 
 def check_prerequisites(console: Any) -> List[str]:
@@ -38,19 +62,12 @@ def check_prerequisites(console: Any) -> List[str]:
 
     missing_tools = []
 
+    # Check each tool
     for tool in required_tools:
-        cmd = ["which", tool] if sys.platform != "win32" else ["where", tool]
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0:
-                logging.info(f"Tool found: {tool}")
-            else:
-                logging.warning(f"Tool not found: {tool}")
-                missing_tools.append(tool)
-        except Exception as e:
-            logging.error(f"Error checking for tool {tool}: {str(e)}")
+        if not _check_tool_availability(tool):
             missing_tools.append(tool)
 
+    # Report results
     if missing_tools:
         missing_str = ", ".join(missing_tools)
         logging.warning(f"Missing tools that might affect checks: {missing_str}")
