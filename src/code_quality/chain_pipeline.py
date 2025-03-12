@@ -6,16 +6,11 @@ by using the Chain of Responsibility pattern, allowing checks to be added,
 removed, or modified without affecting the rest of the pipeline.
 """
 
-import configparser
-import json
 import logging
 import os
-import re
-import subprocess
 import sys
 import traceback
 from argparse import ArgumentParser
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
@@ -33,7 +28,11 @@ from .links.ruff import RuffCheck
 from .links.security import SecurityCheckLink
 from .links.test_coverage import TestCoverageCheck
 from .links.type_checking import TypeCheckingLink
-from .utils import CheckResult, CheckStatus, create_summary_table, print_rich_result
+from .pipeline_config import load_config
+from .pipeline_parsers import parse_details
+from .pipeline_prerequisites import check_prerequisites
+from .pipeline_reporting import print_summary, results_to_json, save_json_output
+from .utils import CheckResult, CheckStatus
 
 
 class CodeQualityChainPipeline:
@@ -55,54 +54,10 @@ class CodeQualityChainPipeline:
         self.project_path = os.path.abspath(project_path)
         self.console = Console()
         self.results: List[CheckResult] = []
-        self.config = self._load_config(config_file)
+        self.config = load_config(config_file)
         self.check_chain = self._build_check_chain()
 
         logging.info(f"Starting pipeline for project: {project_path}")
-
-    def _load_config(self, config_file: Optional[str]) -> Dict[str, Any]:
-        """
-        Load configuration from file or use defaults.
-
-        Args:
-            config_file: Path to the configuration file
-
-        Returns:
-            A dictionary containing the configuration
-        """
-        logging.info("Loading configuration.")
-        config_parser = configparser.ConfigParser()
-
-        # Default configuration
-        config_parser["general"] = {
-            "min_test_coverage": "80",
-            "max_file_length": "300",
-            "max_function_length": "50",
-            "check_bandit": "true",
-            "check_mypy": "true",
-            "check_ruff": "true",
-            "main_branch": "main",
-            "enable_auto_commit": "false",
-        }
-        config_parser["paths"] = {
-            "src_dirs": "src,app",
-            "test_dir": "tests",
-            "exclude_dirs": "venv,.venv,__pycache__,build,dist",
-        }
-
-        if config_file and os.path.exists(config_file):
-            config_parser.read(config_file)
-            logging.info(f"Configuration loaded from {config_file}.")
-        else:
-            logging.info("Using default configuration.")
-
-        # Convert config to dictionary
-        config = {}
-        for section in config_parser.sections():
-            for key, value in config_parser[section].items():
-                config[key] = value
-
-        return config
 
     def _build_check_chain(self) -> CheckChain:
         """
@@ -155,7 +110,7 @@ class CodeQualityChainPipeline:
         self.console.print(f"Project path: {self.project_path}")
 
         # Check if all required tools are installed
-        self._check_prerequisites()
+        check_prerequisites(self.console)
 
         # Create context for the checks
         all_src_dirs = [
@@ -186,280 +141,10 @@ class CodeQualityChainPipeline:
         self.results = self.check_chain.execute(context)
 
         # Print summary
-        self._print_summary()
+        print_summary(self.console, self.results)
 
         # Return True if all checks passed
         return all(result.status == CheckStatus.PASSED for result in self.results)
-
-    def _check_prerequisites(self) -> None:
-        """
-        Check if required tools are installed.
-        """
-        logging.info("Checking required tools.")
-
-        # List of required tools
-        required_tools = [
-            "pytest",
-            "black",
-            "isort",
-            "flake8",
-            "mypy",
-            "bandit",
-            "ruff",
-            "pylint",
-            "coverage",
-            "git",
-        ]
-
-        missing_tools = []
-
-        for tool in required_tools:
-            cmd = ["which", tool] if sys.platform != "win32" else ["where", tool]
-            try:
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                if result.returncode == 0:
-                    logging.info(f"Tool found: {tool}")
-                else:
-                    logging.warning(f"Tool not found: {tool}")
-                    missing_tools.append(tool)
-            except Exception as e:
-                logging.error(f"Error checking for tool {tool}: {str(e)}")
-                missing_tools.append(tool)
-
-        if missing_tools:
-            missing_str = ", ".join(missing_tools)
-            logging.warning(f"Missing tools that might affect checks: {missing_str}")
-            self.console.print(
-                f"[bold yellow]Warning: Some required tools are missing: {missing_str}[/bold yellow]"
-            )
-            self.console.print(
-                "Some quality checks may fail. Consider installing the missing tools."
-            )
-        else:
-            logging.info("✓ All required tools are installed.")
-            self.console.print(
-                "✓ All required tools are installed.", style="bold green"
-            )
-
-    def _print_summary(self) -> None:
-        """Print a summary of the check results."""
-        # First print detailed results for each check
-        self.console.print("\n      Detailed Check Results      \n")
-        for result in self.results:
-            print_rich_result(result.name, result.status, result.details)
-
-        # Then print the summary as before
-        passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
-        failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
-        skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)
-
-        # Create and print the summary table
-        table = create_summary_table(passed, failed, skipped)
-        self.console.print("\n      Pipeline Summary      ")
-        self.console.print(table)
-
-        # Print the overall status
-        if failed > 0:
-            self.console.print(
-                "✗ Some quality checks failed. See details above.",
-                style="bold red",
-            )
-            logging.warning("Some quality checks failed.")
-        else:
-            self.console.print(
-                "✓ All quality checks passed!",
-                style="bold green",
-            )
-            logging.info("All quality checks passed.")
-
-        logging.info(
-            f"Overall quality check status: {'PASSED' if failed == 0 else 'FAILED'}"
-        )
-
-    def _results_to_json(self) -> Dict[str, Any]:
-        """
-        Convert check results to a structured JSON format.
-
-        Returns:
-            A dictionary with the structured JSON representation of results.
-        """
-        # Count results by status
-        passed = sum(1 for r in self.results if r.status == CheckStatus.PASSED)
-        failed = sum(1 for r in self.results if r.status == CheckStatus.FAILED)
-        skipped = sum(1 for r in self.results if r.status == CheckStatus.SKIPPED)
-
-        # Create the JSON structure with metadata
-        json_output: Dict[str, Any] = {
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "project_path": self.project_path,
-                "configuration": self.config,
-                "version": "1.0",  # Version of the JSON format
-            },
-            "summary": {
-                "passed": passed,
-                "failed": failed,
-                "skipped": skipped,
-                "total": len(self.results),
-                "status": "PASSED" if failed == 0 else "FAILED",
-            },
-            "checks": [],  # This will be a list of check results
-        }
-
-        # Add detailed information for each check
-        for result in self.results:
-            # Parse the details to extract more structured information when possible
-            details_obj = self._parse_details(result.name, result.details)
-
-            check_info = {
-                "name": result.name,
-                "status": result.status.value,
-                "raw_details": result.details,  # Always include the raw details
-                "details": details_obj,  # Add structured details when available
-            }
-
-            json_output["checks"].append(check_info)
-
-        return json_output
-
-    def _parse_details(self, check_name: str, details: str) -> Dict[str, Any]:
-        """
-        Parse the details text to extract structured information.
-
-        Args:
-            check_name: Name of the check
-            details: Details text from the check result
-
-        Returns:
-            A dictionary containing structured details information
-        """
-        # Default structure
-        parsed: Dict[str, Any] = {
-            "summary": details.split("\n")[0] if details else "",
-            "issues": [],
-        }
-
-        # Delegate to specific parsers based on check name
-        if "Code Formatting" in check_name:
-            self._parse_formatting_details(details, parsed)
-        elif "Import Sorting" in check_name:
-            self._parse_import_sorting_details(details, parsed)
-        elif "Linting" in check_name:
-            self._parse_linting_details(details, parsed)
-        elif "Type Checking" in check_name:
-            self._parse_type_checking_details(details, parsed)
-        elif "Security Check" in check_name:
-            self._parse_security_details(details, parsed)
-        elif "Test Coverage" in check_name:
-            self._parse_coverage_details(details, parsed)
-        elif (
-            "Naming Conventions" in check_name
-            or "File Length" in check_name
-            or "Function Length" in check_name
-        ):
-            self._parse_code_structure_details(details, parsed)
-        elif "Docstring Check" in check_name:
-            self._parse_docstring_details(details, parsed)
-
-        return parsed
-
-    def _parse_formatting_details(self, details: str, parsed: Dict[str, Any]) -> None:
-        """Parse formatting check details."""
-        if "Files need formatting" in details:
-            # Extract file list if present
-            files = [line.strip() for line in details.split("\n")[1:] if line.strip()]
-            parsed["files"] = files
-
-    def _parse_import_sorting_details(
-        self, details: str, parsed: Dict[str, Any]
-    ) -> None:
-        """Parse import sorting check details."""
-        # Import sorting might include diffs
-        if "Imports need sorting" in details:
-            # Try to extract file paths and diffs
-            files = []
-            current_file = None
-            for line in details.split("\n"):
-                if line.startswith("---") and "before" in line:
-                    current_file = (
-                        line.split("---")[1].strip().split(":before")[0].strip()
-                    )
-                    files.append(current_file)
-            parsed["files"] = files
-
-    def _parse_linting_details(self, details: str, parsed: Dict[str, Any]) -> None:
-        """Parse linting check details."""
-        # Extract individual linting issues
-        issues = []
-        current_issue = None
-        for line in details.split("\n"):
-            if line.strip() and ":" in line and any(char.isdigit() for char in line):
-                # This looks like a linting issue with line numbers
-                current_issue = line.strip()
-                issues.append(current_issue)
-        if issues:
-            parsed["issues"] = issues
-
-    def _parse_type_checking_details(
-        self, details: str, parsed: Dict[str, Any]
-    ) -> None:
-        """Parse type checking details."""
-        # Extract type checking issues
-        issues = []
-        current_issue = None
-        for line in details.split("\n"):
-            if line.strip() and ":" in line and any(char.isdigit() for char in line):
-                if "error:" in line or "note:" in line:
-                    current_issue = line.strip()
-                    issues.append(current_issue)
-        if issues:
-            parsed["issues"] = issues
-
-    def _parse_security_details(self, details: str, parsed: Dict[str, Any]) -> None:
-        """Parse security check details."""
-        # Extract security issues
-        issues = []
-        for line in details.split("\n"):
-            if "Issue:" in line:
-                issues.append(line.strip())
-        if issues:
-            parsed["issues"] = issues
-
-    def _parse_coverage_details(self, details: str, parsed: Dict[str, Any]) -> None:
-        """Parse test coverage details."""
-        # Extract coverage percentage
-        for line in details.split("\n"):
-            if "coverage is" in line.lower():
-                match = re.search(r"(\d+(?:\.\d+)?)%", line)
-                if match:
-                    coverage_value = match.group(1)
-                    try:
-                        # Ensure coverage_percentage is typed correctly
-                        parsed["coverage_percentage"] = float(coverage_value)
-                    except ValueError:
-                        pass
-
-    def _parse_code_structure_details(
-        self, details: str, parsed: Dict[str, Any]
-    ) -> None:
-        """Parse naming, file length, and function length details."""
-        # Extract files/functions exceeding limits
-        issues = []
-        for line in details.split("\n"):
-            if line.strip() and ":" in line and ("/" in line or "\\" in line):
-                issues.append(line.strip())
-        if issues:
-            parsed["issues"] = issues
-
-    def _parse_docstring_details(self, details: str, parsed: Dict[str, Any]) -> None:
-        """Parse docstring check details."""
-        # Extract missing docstrings
-        issues = []
-        for line in details.split("\n"):
-            if line.strip() and "-" in line and "function" in line:
-                issues.append(line.strip())
-        if issues:
-            parsed["issues"] = issues
 
     def save_json_output(self, json_file: str) -> None:
         """
@@ -472,20 +157,8 @@ class CodeQualityChainPipeline:
             logging.warning("No results to save as JSON.")
             return
 
-        json_output = self._results_to_json()
-
-        try:
-            with open(json_file, "w") as f:
-                json.dump(json_output, f, indent=2)
-            logging.info(f"Results saved as JSON to {json_file}")
-            self.console.print(
-                f"Results saved as JSON to {json_file}", style="bold green"
-            )
-        except Exception as e:
-            logging.error(f"Failed to save JSON output: {str(e)}")
-            self.console.print(
-                f"Failed to save JSON output: {str(e)}", style="bold red"
-            )
+        json_output = results_to_json(self.results, self.project_path, self.config)
+        save_json_output(json_output, json_file, self.console)
 
 
 def main(args: Optional[List[str]] = None) -> int:
