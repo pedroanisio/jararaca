@@ -53,7 +53,9 @@ class DependencyCheck(CheckLink):
         result = run_command(command)
 
         if result.returncode != 0:
-            raise RuntimeError(f"Failed to check for outdated packages:\n{result.stderr}")
+            raise RuntimeError(
+                f"Failed to check for outdated packages:\n{result.stderr}"
+            )
 
         try:
             outdated_packages = json.loads(result.stdout)
@@ -98,7 +100,7 @@ class DependencyCheck(CheckLink):
                         )
         except Exception as e:
             outdated_dependencies.append((req_file, f"Error: {str(e)}", "", ""))
-        
+
         return outdated_dependencies
 
     def _format_results(
@@ -129,7 +131,7 @@ class DependencyCheck(CheckLink):
         else:
             status = CheckStatus.PASSED
             details = "All dependencies are up-to-date."
-        
+
         return status, details
 
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
@@ -158,17 +160,17 @@ class DependencyCheck(CheckLink):
         try:
             # Get the list of outdated packages
             outdated_dict = self._get_outdated_packages()
-            
+
             # Check each requirements file for outdated packages
             outdated_dependencies = []
             for req_file in requirements_files:
                 outdated_dependencies.extend(
                     self._check_requirements_file(req_file, outdated_dict)
                 )
-            
+
             # Format the results
             status, details = self._format_results(outdated_dependencies)
-            
+
         except RuntimeError as e:
             return [CheckResult(self.name, CheckStatus.FAILED, str(e))]
 
