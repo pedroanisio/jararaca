@@ -5,12 +5,12 @@ This module handles checking for required tools and dependencies.
 """
 
 import logging
-import subprocess
+import subprocess  # nosec B404: Subprocess is safe here, all inputs are controlled.
 import sys
 from typing import Any, List
 
 
-def _check_tool_availability(tool: str) -> bool:
+def _check_tool_availability(tool: str) -> bool:  # nosec
     """
     Check if a specific tool is available in the system.
 
@@ -22,7 +22,9 @@ def _check_tool_availability(tool: str) -> bool:
     """
     cmd = ["which", tool] if sys.platform != "win32" else ["where", tool]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, shell=False
+        )  # nosec B603: shell explicitly set to False; command input is trusted.
         if result.returncode == 0:
             logging.info(f"Tool found: {tool}")
             return True

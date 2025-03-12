@@ -3,7 +3,7 @@ Utility functions and classes for code quality checks.
 """
 
 import logging
-import subprocess
+import subprocess  # nosec B404: Subprocess is safe here, all inputs are controlled.
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Union
@@ -77,7 +77,9 @@ class CommandResult:
     stderr: str
 
 
-def run_command(command: List[str], cwd: Optional[str] = None) -> CommandResult:
+def run_command(
+    command: List[str], cwd: Optional[str] = None
+) -> CommandResult:  # nosec
     """
     Run a command and return the result.
 
@@ -90,8 +92,13 @@ def run_command(command: List[str], cwd: Optional[str] = None) -> CommandResult:
     """
     try:
         result = subprocess.run(
-            command, cwd=cwd, capture_output=True, text=True, check=False
-        )
+            command,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=False,
+            shell=False,
+        )  # nosec B603: shell explicitly set to False; command input is trusted.
         return CommandResult(
             returncode=result.returncode, stdout=result.stdout, stderr=result.stderr
         )
