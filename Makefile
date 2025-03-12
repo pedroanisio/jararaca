@@ -10,7 +10,7 @@ coverage-html:
 
 # Run tests with coverage (terminal report)
 coverage:
-	pytest --cov=src/jararaca --cov-report=term-missing
+	clear; pytest --cov=src/jararaca --cov-report=term-missing
 
 # Main clean target aggregates all cleaning tasks
 clean: clean-build clean-cache
@@ -40,4 +40,3 @@ setup: requirements.txt
 init:
 	python3 -m venv venv
 	@echo "Virtual environment created. Activate it by running: source venv/bin/activate"
-
