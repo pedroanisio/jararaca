@@ -412,35 +412,21 @@ def _private_function():
 # This is a standard __main__.py file
 def main():
     print("Hello World")
-    
+
 if __name__ == "__main__":
     main()
 """
             )
 
-        # Create a patched version of the check that accepts special module names
-        with patch.object(self.check, "_check_module_name") as mock_check_module:
-            # The patched implementation should recognize special names
-            def side_effect(module_name, file_path):
-                if module_name.startswith("__") and module_name.endswith("__"):
-                    return []  # No issues for special modules
-                return self.check._check_module_name(module_name, file_path)
+        # Execute the check normally - we don't need to patch since the
+        # function already handles special module names correctly
+        context = {"project_path": self.project_path, "source_dirs": ["src"]}
+        results = self.check._execute_check(context)
 
-            mock_check_module.side_effect = side_effect
-
-            context = {"project_path": self.project_path, "source_dirs": ["src"]}
-
-            # Execute the check
-            results = self.check._execute_check(context)
-
-            # Verify the check was called
-            mock_check_module.assert_called()
-
-            # Check that the result was created correctly
-            self.assertEqual(len(results), 1)
-            self.assertEqual(results[0].name, "Naming Conventions")
-            self.assertEqual(results[0].status, CheckStatus.PASSED)
-            self.assertIn("All code follows naming conventions", results[0].details)
+        # Verify the results are correct
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].status, CheckStatus.PASSED)
+        self.assertEqual(results[0].details, "All code follows naming conventions.")
 
     def test_check_naming_conventions_docstring_false_positives(self):
         """Test that words in docstrings aren't incorrectly flagged as naming issues."""
