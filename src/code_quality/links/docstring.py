@@ -122,19 +122,19 @@ class DocstringCheck(CheckLink):
         super().__init__("Docstring Check")
         self.skip_private = skip_private
         self.skip_test_files = skip_test_files
-        
+
     def _process_python_file(self, file_path: str) -> List[Tuple[str, str, int]]:
         """
         Process a Python file to find missing docstrings.
-        
+
         Args:
             file_path: Path to the Python file to process
-            
+
         Returns:
             List of tuples containing (file_path, element_description, line_number)
         """
         missing_docstrings = []
-        
+
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -145,21 +145,41 @@ class DocstringCheck(CheckLink):
 
             for element_type, name, line_no in visitor.missing_docstrings:
                 if element_type == "module":
-                    missing_docstrings.append(
-                        (file_path, "module", line_no)
-                    )
+                    missing_docstrings.append((file_path, "module", line_no))
                 else:
                     missing_docstrings.append(
                         (file_path, f"{element_type} '{name}'", line_no)
                     )
         except SyntaxError as e:
-            missing_docstrings.append(
-                (file_path, f"Syntax error: {str(e)}", 0)
-            )
+            missing_docstrings.append((file_path, f"Syntax error: {str(e)}", 0))
         except Exception as e:
             missing_docstrings.append((file_path, f"Error: {str(e)}", 0))
-            
+
         return missing_docstrings
+
+    def _format_result(self, missing_docstrings: List[Tuple[str, str, int]]) -> Tuple[CheckStatus, str]:
+        """
+        Format the result of the docstring check.
+        
+        Args:
+            missing_docstrings: List of tuples containing (file_path, element_description, line_number)
+            
+        Returns:
+            A tuple containing (status, details)
+        """
+        if missing_docstrings:
+            status = CheckStatus.FAILED
+            details = "Missing docstrings found:\n"
+            for file_path, element, line_no in missing_docstrings:
+                if line_no > 0:
+                    details += f"- {file_path}:{line_no} - {element}\n"
+                else:
+                    details += f"- {file_path}: {element}\n"
+        else:
+            status = CheckStatus.PASSED
+            details = "All modules, classes, and functions have docstrings."
+            
+        return status, details
 
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
@@ -199,16 +219,5 @@ class DocstringCheck(CheckLink):
                     missing_docstrings.extend(self._process_python_file(file_path))
 
         # Generate result based on findings
-        if missing_docstrings:
-            status = CheckStatus.FAILED
-            details = "Missing docstrings found:\n"
-            for file_path, element, line_no in missing_docstrings:
-                if line_no > 0:
-                    details += f"- {file_path}:{line_no} - {element}\n"
-                else:
-                    details += f"- {file_path}: {element}\n"
-        else:
-            status = CheckStatus.PASSED
-            details = "All modules, classes, and functions have docstrings."
-
+        status, details = self._format_result(missing_docstrings)
         return [CheckResult(self.name, status, details)]

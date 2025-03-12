@@ -99,6 +99,37 @@ class FunctionLengthCheck(CheckLink):
         super().__init__("Function Length")
         self.max_lines = max_lines
 
+    def _process_file(self, file_path: str) -> List[Tuple[str, str, int]]:
+        """
+        Process a single file to find functions that exceed the maximum length.
+
+        Args:
+            file_path: Path to the file to process
+
+        Returns:
+            A list of tuples containing (file_path, function_name, line_count)
+        """
+        long_functions = []
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                code = f.read()
+
+            try:
+                tree = ast.parse(code)
+                visitor = FunctionVisitor()
+                visitor.visit(tree)
+
+                for name, start_line, end_line, length in visitor.functions:
+                    if length > self.max_lines:
+                        long_functions.append((file_path, name, length))
+            except SyntaxError as e:
+                long_functions.append((file_path, f"Syntax error: {str(e)}", 0))
+        except Exception as e:
+            long_functions.append((file_path, f"Error: {str(e)}", 0))
+
+        return long_functions
+
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
         Execute the function length check.
@@ -134,24 +165,7 @@ class FunctionLengthCheck(CheckLink):
                         continue
 
                     file_path = os.path.join(root, file)
-                    try:
-                        with open(file_path, "r", encoding="utf-8") as f:
-                            code = f.read()
-
-                        try:
-                            tree = ast.parse(code)
-                            visitor = FunctionVisitor()
-                            visitor.visit(tree)
-
-                            for name, start_line, end_line, length in visitor.functions:
-                                if length > self.max_lines:
-                                    long_functions.append((file_path, name, length))
-                        except SyntaxError as e:
-                            long_functions.append(
-                                (file_path, f"Syntax error: {str(e)}", 0)
-                            )
-                    except Exception as e:
-                        long_functions.append((file_path, f"Error: {str(e)}", 0))
+                    long_functions.extend(self._process_file(file_path))
 
         if long_functions:
             status = CheckStatus.FAILED

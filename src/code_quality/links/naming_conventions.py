@@ -166,6 +166,61 @@ class NamingConventionsCheck(CheckLink):
                 )
         return issues
 
+    def _should_skip_variable(self, variable_name: str) -> bool:
+        """
+        Check if a variable name should be skipped in the naming convention check.
+        
+        Args:
+            variable_name: The name of the variable to check
+            
+        Returns:
+            True if the variable should be skipped, False otherwise
+        """
+        # Skip Python keywords and common pattern variables
+        python_keywords = [
+            "self", "cls", "True", "False", "None", "import",
+            "from", "as", "class", "def", "for", "if", "return", "yield",
+        ]
+        
+        return (variable_name in python_keywords or 
+                variable_name.lower() in self.common_words)
+    
+    def _check_constant_name(self, variable_name: str, file_path: str) -> List[str]:
+        """
+        Check if a constant name follows the UPPER_CASE convention.
+        
+        Args:
+            variable_name: The name of the constant to check
+            file_path: The path to the file being checked
+            
+        Returns:
+            A list of naming convention issues found
+        """
+        issues = []
+        if not self.constant_pattern.match(variable_name):
+            issues.append(
+                f"Constant '{variable_name}' in {file_path} does not follow UPPER_CASE convention"
+            )
+        return issues
+    
+    def _check_regular_variable_name(self, variable_name: str, file_path: str) -> List[str]:
+        """
+        Check if a regular variable name follows the snake_case convention.
+        
+        Args:
+            variable_name: The name of the variable to check
+            file_path: The path to the file being checked
+            
+        Returns:
+            A list of naming convention issues found
+        """
+        issues = []
+        if not self.variable_pattern.match(variable_name):
+            issues.append(
+                f"Variable '{variable_name}' in {file_path} does not follow snake_case convention"
+            )
+        return issues
+
     def _check_variable_names(self, content: str, file_path: str) -> List[str]:
         """
         Check variable names in a file for snake_case convention.
@@ -188,43 +243,20 @@ class NamingConventionsCheck(CheckLink):
         for match in variable_pattern.finditer(cleaned_content):
             variable_name = match.group(1)
 
-            # Skip Python keywords and common pattern variables
-            if (
-                variable_name
-                in [
-                    "self",
-                    "cls",
-                    "True",
-                    "False",
-                    "None",
-                    "import",
-                    "from",
-                    "as",
-                    "class",
-                    "def",
-                    "for",
-                    "if",
-                    "return",
-                    "yield",
-                ]
-                or variable_name.lower() in self.common_words
-            ):
+            # Skip variables that should be ignored
+            if self._should_skip_variable(variable_name):
                 continue
 
             # Check if it's a constant (all uppercase)
             if variable_name.isupper():
-                if not self.constant_pattern.match(variable_name):
-                    issues.append(
-                        f"Constant '{variable_name}' in {file_path} does not follow UPPER_CASE convention"
-                    )
+                issues.extend(self._check_constant_name(variable_name, file_path))
             # Skip dunder and private variables
             elif variable_name.startswith("__") or variable_name.startswith("_"):
                 continue
             # Otherwise it should be a regular variable
-            elif not self.variable_pattern.match(variable_name):
-                issues.append(
-                    f"Variable '{variable_name}' in {file_path} does not follow snake_case convention"
-                )
+            else:
+                issues.extend(self._check_regular_variable_name(variable_name, file_path))
+                
         return issues
 
     def _check_file_content(self, content: str, file_path: str) -> List[str]:

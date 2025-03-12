@@ -33,6 +33,27 @@ class FileLengthCheck(CheckLink):
         super().__init__("File Length")
         self.max_lines = max_lines
 
+    def _process_file(self, file_path: str) -> Tuple[bool, Union[int, str]]:
+        """
+        Process a single file to check its length.
+
+        Args:
+            file_path: Path to the file to check
+
+        Returns:
+            A tuple containing (is_too_long, line_count_or_error)
+        """
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                line_count: int = len(lines)
+                return line_count > self.max_lines, line_count
+        except Exception as e:
+            # Use a string for error messages
+            error_msg: str = f"Error: {str(e)}"
+            logging.error(f"Error reading {file_path}: {str(e)}")
+            return True, error_msg
+
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
         Execute the file length check.
@@ -72,19 +93,9 @@ class FileLengthCheck(CheckLink):
                         continue
 
                     file_path = os.path.join(root, file)
-                    try:
-                        with open(file_path, "r", encoding="utf-8") as f:
-                            lines = f.readlines()
-                            line_count: int = len(lines)
-                            if line_count > self.max_lines:
-                                # Add the file with its line count to our list
-                                long_files.append((file_path, line_count))
-                    except Exception as e:
-                        # Use a string for error messages
-                        error_msg: str = f"Error: {str(e)}"
-                        # Add the file with an error message
-                        long_files.append((file_path, error_msg))
-                        logging.error(f"Error reading {file_path}: {str(e)}")
+                    is_too_long, line_count = self._process_file(file_path)
+                    if is_too_long:
+                        long_files.append((file_path, line_count))
 
         # Determine the status based on long files found
         if long_files:
