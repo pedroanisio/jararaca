@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.links.function_length import FunctionLengthCheck
-from code_quality.utils import CheckResult, CheckStatus
+from jararaca.links.function_length import FunctionLengthCheck
+from jararaca.utils import CheckResult, CheckStatus
 
 
 class TestFunctionLengthCheck(unittest.TestCase):
@@ -254,9 +254,7 @@ def function_with_syntax_error():
         context = {"project_path": "", "source_dirs": ["src"]}
 
         # Patch the CheckResult constructor to handle the 'details' parameter
-        with patch(
-            "code_quality.links.function_length.CheckResult"
-        ) as mock_check_result:
+        with patch("jararaca.links.function_length.CheckResult") as mock_check_result:
             # Create a mock CheckResult instance
             mock_result = MagicMock()
             mock_result.name = "Function Length"

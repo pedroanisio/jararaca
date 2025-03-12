@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.links.ruff import RuffCheck
-from code_quality.utils import CheckResult, CheckStatus
+from jararaca.links.ruff import RuffCheck
+from jararaca.utils import CheckResult, CheckStatus
 
 
 class TestRuffCheck(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestRuffCheck(unittest.TestCase):
         """Tear down test fixtures."""
         self.temp_dir.cleanup()
 
-    @patch("code_quality.links.ruff.run_command")
+    @patch("jararaca.links.ruff.run_command")
     def test_check_ruff_success(self, mock_run_command):
         """Test the Ruff check when all code passes linting checks."""
         # Setup the mock to return a passing check
@@ -46,7 +46,7 @@ class TestRuffCheck(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.PASSED)
         self.assertEqual(results[0].details, "All code passes Ruff checks.")
 
-    @patch("code_quality.links.ruff.run_command")
+    @patch("jararaca.links.ruff.run_command")
     def test_check_ruff_with_issues(self, mock_run_command):
         """Test the Ruff check when code has linting issues."""
         # Setup the mock to return a failing check
@@ -68,7 +68,7 @@ class TestRuffCheck(unittest.TestCase):
         self.assertIn("Ruff issues found", results[0].details)
         self.assertIn("Line too long", results[0].details)
 
-    @patch("code_quality.links.ruff.run_command")
+    @patch("jararaca.links.ruff.run_command")
     def test_check_ruff_with_errors(self, mock_run_command):
         """Test the Ruff check when it encounters errors."""
         # Setup the mock to return a failing check with stderr
@@ -90,7 +90,7 @@ class TestRuffCheck(unittest.TestCase):
         self.assertIn("Ruff issues found", results[0].details)
         self.assertIn("Cannot parse", results[0].details)
 
-    @patch("code_quality.links.ruff.run_command")
+    @patch("jararaca.links.ruff.run_command")
     def test_check_ruff_with_multiple_dirs(self, mock_run_command):
         """Test the Ruff check with multiple source directories."""
         # Setup the mock to return a passing check

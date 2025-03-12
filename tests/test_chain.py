@@ -6,8 +6,8 @@ import unittest
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
 
-from code_quality.chain import CheckChain, CheckLink
-from code_quality.utils import CheckResult, CheckStatus
+from jararaca.chain import CheckChain, CheckLink
+from jararaca.utils import CheckResult, CheckStatus
 
 
 class MockCheckLink(CheckLink):

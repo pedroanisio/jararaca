@@ -6,9 +6,9 @@ import os
 import unittest
 from unittest.mock import MagicMock, mock_open, patch
 
-from code_quality.chain import CheckChain
-from code_quality.chain_pipeline import CodeQualityChainPipeline, main
-from code_quality.utils import CheckResult, CheckStatus
+from jararaca.chain import CheckChain
+from jararaca.chain_pipeline import CodeQualityChainPipeline, main
+from jararaca.utils import CheckResult, CheckStatus
 
 
 class TestCodeQualityChainPipeline(unittest.TestCase):
@@ -25,11 +25,11 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     def test_initialization(self):
         """Test initializing the pipeline."""
         with patch(
-            "code_quality.pipeline_config.configparser.ConfigParser"
+            "jararaca.pipeline_config.configparser.ConfigParser"
         ) as mock_config, patch(
-            "code_quality.pipeline_config.load_config"
+            "jararaca.pipeline_config.load_config"
         ) as mock_load_config, patch(
-            "code_quality.chain_pipeline.CheckChain"
+            "jararaca.chain_pipeline.CheckChain"
         ) as mock_chain:
             # Create mock instances
             mock_chain_instance = MagicMock()
@@ -55,8 +55,8 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_build_check_chain(self):
         """Test building the check chain."""
-        with patch("code_quality.chain_pipeline.CheckChain") as mock_chain, patch(
-            "code_quality.chain_pipeline.load_config"
+        with patch("jararaca.chain_pipeline.CheckChain") as mock_chain, patch(
+            "jararaca.chain_pipeline.load_config"
         ) as mock_load_config:
             # Create mock instances
             mock_chain_instance = MagicMock()
@@ -78,20 +78,20 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_run(self):
         """Test running the pipeline."""
-        with patch("code_quality.chain_pipeline.CheckChain") as mock_chain_class, patch(
-            "code_quality.chain_pipeline.Console"
+        with patch("jararaca.chain_pipeline.CheckChain") as mock_chain_class, patch(
+            "jararaca.chain_pipeline.Console"
         ) as mock_console_class, patch(
-            "code_quality.pipeline_prerequisites.subprocess.run"
+            "jararaca.pipeline_prerequisites.subprocess.run"
         ) as mock_subprocess_run, patch(
-            "code_quality.chain_pipeline.os.path.exists"
+            "jararaca.chain_pipeline.os.path.exists"
         ) as mock_exists, patch(
-            "code_quality.chain_pipeline.os.path.isdir"
+            "jararaca.chain_pipeline.os.path.isdir"
         ) as mock_isdir, patch(
-            "code_quality.chain_pipeline.check_prerequisites"
+            "jararaca.chain_pipeline.check_prerequisites"
         ) as mock_check_prerequisites, patch(
-            "code_quality.chain_pipeline.print_summary"
+            "jararaca.chain_pipeline.print_summary"
         ) as mock_print_summary, patch(
-            "code_quality.chain_pipeline.load_config"
+            "jararaca.chain_pipeline.load_config"
         ) as mock_load_config:
             # Create mock instances
             mock_chain = MagicMock()
@@ -128,21 +128,21 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     def test_print_summary(self):
         """Test printing the pipeline summary."""
         with patch(
-            "code_quality.pipeline_reporting.create_summary_table"
+            "jararaca.pipeline_reporting.create_summary_table"
         ) as mock_create_table, patch(
-            "code_quality.chain_pipeline.Console"
+            "jararaca.chain_pipeline.Console"
         ) as mock_console_class, patch(
-            "code_quality.chain_pipeline.print_summary"
+            "jararaca.chain_pipeline.print_summary"
         ) as mock_print_summary, patch(
-            "code_quality.chain_pipeline.load_config"
+            "jararaca.chain_pipeline.load_config"
         ) as mock_load_config, patch(
-            "code_quality.chain_pipeline.CheckChain"
+            "jararaca.chain_pipeline.CheckChain"
         ) as mock_chain_class, patch(
-            "code_quality.chain_pipeline.check_prerequisites"
+            "jararaca.chain_pipeline.check_prerequisites"
         ) as mock_check_prerequisites, patch(
-            "code_quality.chain_pipeline.os.path.exists"
+            "jararaca.chain_pipeline.os.path.exists"
         ) as mock_exists, patch(
-            "code_quality.chain_pipeline.os.path.isdir"
+            "jararaca.chain_pipeline.os.path.isdir"
         ) as mock_isdir:
 
             # Set up file system mocks
@@ -180,11 +180,11 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
             # Verify print_summary was called with the results
             mock_print_summary.assert_called_once_with(mock_console, mock_results)
 
-    @patch("code_quality.chain_pipeline.ArgumentParser")
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
     def test_main_success(self, mock_pipeline_class, mock_arg_parser):
         """Test main function with successful run."""
-        from code_quality.chain_pipeline import main
+        from jararaca.chain_pipeline import main
 
         # Create mock instances
         mock_args = MagicMock()
@@ -210,11 +210,11 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_pipeline.run.assert_called_once()
         self.assertEqual(result, 0)  # Success return code
 
-    @patch("code_quality.chain_pipeline.ArgumentParser")
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
     def test_main_failure(self, mock_pipeline_class, mock_arg_parser):
         """Test main function with failed run."""
-        from code_quality.chain_pipeline import main
+        from jararaca.chain_pipeline import main
 
         # Create mock instances
         mock_args = MagicMock()
@@ -240,11 +240,11 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
         mock_pipeline.run.assert_called_once()
         self.assertEqual(result, 1)  # Failure return code
 
-    @patch("code_quality.chain_pipeline.ArgumentParser")
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
     def test_main_exception(self, mock_pipeline_class, mock_arg_parser):
         """Test main function with exception."""
-        from code_quality.chain_pipeline import main
+        from jararaca.chain_pipeline import main
 
         # Create mock instances
         mock_args = MagicMock()
@@ -274,16 +274,16 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
 
     def test_json_output(self):
         """Test the JSON output functionality."""
-        with patch("code_quality.chain_pipeline.CheckChain") as mock_chain_class, patch(
-            "code_quality.chain_pipeline.Console"
+        with patch("jararaca.chain_pipeline.CheckChain") as mock_chain_class, patch(
+            "jararaca.chain_pipeline.Console"
         ) as mock_console_class, patch(
             "builtins.open", mock_open()
         ) as mock_file, patch(
-            "code_quality.chain_pipeline.load_config"
+            "jararaca.chain_pipeline.load_config"
         ) as mock_load_config, patch(
-            "code_quality.chain_pipeline.results_to_json"
+            "jararaca.chain_pipeline.results_to_json"
         ) as mock_results_to_json, patch(
-            "code_quality.chain_pipeline.save_json_output"
+            "jararaca.chain_pipeline.save_json_output"
         ) as mock_save_json_output:
             # Create mock instances
             mock_chain = MagicMock()

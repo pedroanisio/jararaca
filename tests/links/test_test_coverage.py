@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.links.test_coverage import TestCoverageCheck
-from code_quality.utils import CheckStatus, CommandResult
+from jararaca.links.test_coverage import TestCoverageCheck
+from jararaca.utils import CheckStatus, CommandResult
 
 
 class TestTestCoverageCheck(unittest.TestCase):
@@ -65,7 +65,7 @@ class TestModule(unittest.TestCase):
             )
 
         # Mock the run_command function to return a successful result with good coverage
-        with patch("code_quality.links.test_coverage.run_command") as mock_run:
+        with patch("jararaca.links.test_coverage.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=0,
                 stdout="""
@@ -158,7 +158,7 @@ class TestModule(unittest.TestCase):
             )
 
         # Mock the run_command function to return a result with low coverage
-        with patch("code_quality.links.test_coverage.run_command") as mock_run:
+        with patch("jararaca.links.test_coverage.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=1,  # Non-zero return code indicates failure
                 stdout="""
@@ -225,7 +225,7 @@ def subtract(a, b):
             )
 
         # Mock the run_command function to return a result with 85% coverage
-        with patch("code_quality.links.test_coverage.run_command") as mock_run:
+        with patch("jararaca.links.test_coverage.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=1,  # Non-zero return code indicates failure
                 stdout="""
@@ -296,7 +296,7 @@ def subtract(a, b):
             )
 
         # Mock the run_command function to return a successful result
-        with patch("code_quality.links.test_coverage.run_command") as mock_run:
+        with patch("jararaca.links.test_coverage.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=0,
                 stdout="""
@@ -364,7 +364,7 @@ def function_with_syntax_error():
             )
 
         # Mock the run_command function to return an error result
-        with patch("code_quality.links.test_coverage.run_command") as mock_run:
+        with patch("jararaca.links.test_coverage.run_command") as mock_run:
             mock_run.return_value = CommandResult(
                 returncode=1,
                 stdout="",

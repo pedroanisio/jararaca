@@ -9,7 +9,7 @@ This document provides detailed information about the Jararaca code quality API 
 The main class that runs all the quality checks using a chain of responsibility pattern.
 
 ```python
-from code_quality import CodeQualityChainPipeline
+from jararaca import CodeQualityChainPipeline
 
 # Initialize the pipeline
 pipeline = CodeQualityChainPipeline(
@@ -50,7 +50,7 @@ Returns:
 A data class representing the result of a single check.
 
 ```python
-from code_quality import CheckResult, CheckStatus
+from jararaca import CheckResult, CheckStatus
 
 result = CheckResult(
     name="Code Formatting",
@@ -70,7 +70,7 @@ result = CheckResult(
 An enumeration of possible check statuses.
 
 ```python
-from code_quality import CheckStatus
+from jararaca import CheckStatus
 
 status = CheckStatus.PASSED
 ```
@@ -87,7 +87,7 @@ Values:
 Runs a shell command in the specified directory.
 
 ```python
-from code_quality.utils import run_command
+from jararaca.utils import run_command
 
 result = run_command(["ls", "-la"], "/path/to/directory")
 ```
@@ -104,7 +104,7 @@ Returns:
 Formats a check result for terminal output with colors.
 
 ```python
-from code_quality.utils import format_result_output
+from jararaca.utils import format_result_output
 
 output = format_result_output(
     name="Code Formatting",

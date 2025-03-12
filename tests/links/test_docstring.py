@@ -8,8 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.links.docstring import DocstringCheck, DocstringVisitor
-from code_quality.utils import CheckStatus
+from jararaca.links.docstring import DocstringCheck, DocstringVisitor
+from jararaca.utils import CheckStatus
 
 
 class TestDocstringCheck(unittest.TestCase):
@@ -82,7 +82,7 @@ async def good_async_function():
             "All modules, classes, and functions have docstrings", results[0].details
         )
 
-    @patch("code_quality.links.docstring.DocstringVisitor")
+    @patch("jararaca.links.docstring.DocstringVisitor")
     def test_check_docstring_with_violations(self, mock_visitor_class):
         """Test the docstring check when modules, classes, or functions are missing docstrings."""
         # Create a source directory
@@ -172,7 +172,7 @@ class TestClass:
             "All modules, classes, and functions have docstrings", results[0].details
         )
 
-    @patch("code_quality.links.docstring.DocstringVisitor")
+    @patch("jararaca.links.docstring.DocstringVisitor")
     def test_check_docstring_include_test_files(self, mock_visitor_class):
         """Test the docstring check when test files are included."""
         # Create a check that doesn't skip test files
@@ -217,7 +217,7 @@ class TestClass:
         self.assertEqual(results[0].status, CheckStatus.FAILED)
         self.assertIn("Missing docstrings found", results[0].details)
 
-    @patch("code_quality.links.docstring.DocstringVisitor")
+    @patch("jararaca.links.docstring.DocstringVisitor")
     def test_check_docstring_include_private(self, mock_visitor_class):
         """Test the docstring check when private methods are included."""
         # Create a check that doesn't skip private methods
@@ -271,7 +271,7 @@ class SomeClass:
         self.assertEqual(results[0].status, CheckStatus.FAILED)
         self.assertIn("Missing docstrings found", results[0].details)
 
-    @patch("code_quality.links.docstring.DocstringVisitor")
+    @patch("jararaca.links.docstring.DocstringVisitor")
     def test_check_docstring_with_multiple_dirs(self, mock_visitor_class):
         """Test the docstring check with multiple source directories."""
         # Create multiple source directories

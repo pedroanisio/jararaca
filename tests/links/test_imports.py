@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.links.imports import ImportsCheck
-from code_quality.utils import CheckResult, CheckStatus
+from jararaca.links.imports import ImportsCheck
+from jararaca.utils import CheckResult, CheckStatus
 
 
 class TestImportsCheck(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestImportsCheck(unittest.TestCase):
         """Tear down test fixtures."""
         self.temp_dir.cleanup()
 
-    @patch("code_quality.links.imports.run_command")
+    @patch("jararaca.links.imports.run_command")
     def test_check_imports_success(self, mock_run_command):
         """Test the imports check when all imports are properly sorted."""
         # Setup the mock to return a passing check
@@ -46,13 +46,13 @@ class TestImportsCheck(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.PASSED)
         self.assertEqual(results[0].details, "All imports are properly sorted.")
 
-    @patch("code_quality.links.imports.run_command")
+    @patch("jararaca.links.imports.run_command")
     def test_check_imports_failure(self, mock_run_command):
         """Test the imports check when imports need sorting."""
         # Setup the mock to return a failing check
         mock_run_command.return_value = MagicMock(
             returncode=1,
-            stdout="ERROR: src/code_quality/chain_pipeline.py Imports are incorrectly sorted.",
+            stdout="ERROR: src/jararaca/chain_pipeline.py Imports are incorrectly sorted.",
             stderr="",
         )
 
@@ -72,13 +72,13 @@ class TestImportsCheck(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.FAILED)
         self.assertIn("incorrectly sorted", results[0].details)
 
-    @patch("code_quality.links.imports.run_command")
+    @patch("jararaca.links.imports.run_command")
     def test_check_imports_with_errors(self, mock_run_command):
         """Test the imports check when isort encounters errors."""
         # Setup the mock to return an error
         mock_run_command.return_value = MagicMock(
             returncode=1,
-            stdout="ERROR: src/code_quality/chain_pipeline.py Imports are incorrectly sorted.",
+            stdout="ERROR: src/jararaca/chain_pipeline.py Imports are incorrectly sorted.",
             stderr="Error processing file: syntax error",
         )
 
@@ -94,7 +94,7 @@ class TestImportsCheck(unittest.TestCase):
         self.assertIn("incorrectly sorted", results[0].details)
         self.assertIn("Error processing file", results[0].details)
 
-    @patch("code_quality.links.imports.run_command")
+    @patch("jararaca.links.imports.run_command")
     def test_check_imports_with_multiple_dirs(self, mock_run_command):
         """Test the imports check with multiple source directories."""
         # Setup the mock to return a passing check

@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.links.linting import LintingCheck
-from code_quality.utils import CheckResult, CheckStatus
+from jararaca.links.linting import LintingCheck
+from jararaca.utils import CheckResult, CheckStatus
 
 
 class TestLintingCheck(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestLintingCheck(unittest.TestCase):
         """Tear down test fixtures."""
         self.temp_dir.cleanup()
 
-    @patch("code_quality.links.linting.run_command")
+    @patch("jararaca.links.linting.run_command")
     def test_check_linting_success(self, mock_run_command):
         """Test the linting check when all code passes linting checks."""
         # Setup the mock to return a passing check
@@ -46,7 +46,7 @@ class TestLintingCheck(unittest.TestCase):
         self.assertEqual(results[0].status, CheckStatus.PASSED)
         self.assertEqual(results[0].details, "All code passes linting checks.")
 
-    @patch("code_quality.links.linting.run_command")
+    @patch("jararaca.links.linting.run_command")
     def test_check_linting_with_warnings(self, mock_run_command):
         """Test the linting check when code has warnings but no errors."""
         # Pylint returns exit code 4 when it finds warnings
@@ -68,7 +68,7 @@ class TestLintingCheck(unittest.TestCase):
         self.assertIn("Linting issues found", results[0].details)
         self.assertIn("unused-variable", results[0].details)
 
-    @patch("code_quality.links.linting.run_command")
+    @patch("jararaca.links.linting.run_command")
     def test_check_linting_with_errors(self, mock_run_command):
         """Test the linting check when code has errors."""
         # Pylint returns exit code 2 for errors
@@ -88,7 +88,7 @@ class TestLintingCheck(unittest.TestCase):
         self.assertIn("Linting issues found", results[0].details)
         self.assertIn("Syntax error", results[0].details)
 
-    @patch("code_quality.links.linting.run_command")
+    @patch("jararaca.links.linting.run_command")
     def test_check_linting_with_fatal_error(self, mock_run_command):
         """Test the linting check when pylint encounters a fatal error."""
         # Pylint returns exit code >= 16 for fatal errors
@@ -110,7 +110,7 @@ class TestLintingCheck(unittest.TestCase):
         self.assertIn("Linting failed with an error", results[0].details)
         self.assertIn("Fatal error", results[0].details)
 
-    @patch("code_quality.links.linting.run_command")
+    @patch("jararaca.links.linting.run_command")
     def test_check_linting_with_multiple_dirs(self, mock_run_command):
         """Test the linting check with multiple source directories."""
         # Setup the mock to return a passing check

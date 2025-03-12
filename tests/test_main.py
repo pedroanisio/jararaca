@@ -7,14 +7,14 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.chain_pipeline import main
+from jararaca.chain_pipeline import main
 
 
 class TestMain(unittest.TestCase):
     """Test cases for the main function."""
 
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
-    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
     def test_main_simple(self, mock_parser_class, mock_pipeline_class):
         """Test the main function with basic arguments."""
         # Mock the argument parser
@@ -43,8 +43,8 @@ class TestMain(unittest.TestCase):
         # Verify the correct exit code was returned
         self.assertEqual(result, 0)
 
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
-    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
     def test_main_with_config(self, mock_parser_class, mock_pipeline_class):
         """Test the main function with a custom config file."""
         # Mock the argument parser
@@ -70,8 +70,8 @@ class TestMain(unittest.TestCase):
         # Verify the correct exit code was returned
         self.assertEqual(result, 0)
 
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
-    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
     def test_main_with_auto_commit(self, mock_parser_class, mock_pipeline_class):
         """Test the main function with auto-commit enabled."""
         # Mock the argument parser
@@ -98,8 +98,8 @@ class TestMain(unittest.TestCase):
         # Verify the correct exit code was returned
         self.assertEqual(result, 0)
 
-    @patch("code_quality.chain_pipeline.CodeQualityChainPipeline")
-    @patch("code_quality.chain_pipeline.ArgumentParser")
+    @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
+    @patch("jararaca.chain_pipeline.ArgumentParser")
     def test_main_with_failed_checks(self, mock_parser_class, mock_pipeline_class):
         """Test the main function when checks fail."""
         # Mock the argument parser

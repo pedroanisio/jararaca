@@ -1,11 +1,11 @@
 """
-Tests for the utility functions in the code_quality.utils module.
+Tests for the utility functions in the jararaca.utils module.
 """
 
 import unittest
 from unittest.mock import MagicMock, patch
 
-from code_quality.utils import (
+from jararaca.utils import (
     CheckResult,
     CheckStatus,
     Colors,
@@ -91,7 +91,7 @@ class TestUtils(unittest.TestCase):
         # Check that with no details, we don't get an extra newline
         self.assertNotIn("\n", result)
 
-    @patch("code_quality.utils.console")
+    @patch("jararaca.utils.console")
     def test_print_rich_result_passed(self, mock_console):
         """Test printing a passed result with rich formatting."""
         name = "Test Check"
@@ -110,7 +110,7 @@ class TestUtils(unittest.TestCase):
         panel = args[0]
         self.assertEqual(panel.border_style, "green")
 
-    @patch("code_quality.utils.console")
+    @patch("jararaca.utils.console")
     def test_print_rich_result_failed(self, mock_console):
         """Test printing a failed result with rich formatting."""
         name = "Test Check"
@@ -129,7 +129,7 @@ class TestUtils(unittest.TestCase):
         panel = args[0]
         self.assertEqual(panel.border_style, "red")
 
-    @patch("code_quality.utils.console")
+    @patch("jararaca.utils.console")
     def test_print_rich_result_skipped(self, mock_console):
         """Test printing a skipped result with rich formatting."""
         name = "Test Check"
@@ -148,7 +148,7 @@ class TestUtils(unittest.TestCase):
         panel = args[0]
         self.assertEqual(panel.border_style, "yellow")
 
-    @patch("code_quality.utils.console")
+    @patch("jararaca.utils.console")
     def test_print_rich_result_no_details(self, mock_console):
         """Test printing a result with no details."""
         name = "Test Check"
