@@ -5,7 +5,7 @@ Tests for the test coverage check link.
 import os
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from jararaca.links.test_coverage import TestCoverageCheck
 from jararaca.utils import CheckStatus, CommandResult

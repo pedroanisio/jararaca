@@ -9,7 +9,6 @@ from jararaca.utils import (
     CheckResult,
     CheckStatus,
     Colors,
-    CommandResult,
     create_summary_table,
     format_result_output,
     print_rich_result,

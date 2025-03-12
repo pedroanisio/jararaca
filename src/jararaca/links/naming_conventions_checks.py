@@ -16,6 +16,7 @@ from .naming_conventions_utils import (
     DUNDER_PATTERN,
     FUNCTION_PATTERN,
     MODULE_PATTERN,
+    PYTHON_KEYWORDS,
     VARIABLE_PATTERN,
     should_skip_variable,
     strip_comments_and_docstrings,
@@ -67,7 +68,7 @@ def check_class_names(content: str, file_path: str) -> List[str]:
     for match in class_pattern.finditer(cleaned_content):
         class_name = match.group(1)
         # Skip common words that might appear in docstrings
-        if class_name.lower() in COMMON_WORDS:
+        if class_name.lower() in COMMON_WORDS or class_name in PYTHON_KEYWORDS:
             continue
 
         if not CLASS_PATTERN.match(class_name):

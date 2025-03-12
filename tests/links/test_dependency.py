@@ -6,7 +6,7 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from jararaca.links.dependency import DependencyCheck
 from jararaca.utils import CheckStatus, CommandResult

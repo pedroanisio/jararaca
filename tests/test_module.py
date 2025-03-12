@@ -2,9 +2,8 @@
 Tests for the __main__ module.
 """
 
-import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 
 class TestMain(unittest.TestCase):

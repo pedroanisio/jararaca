@@ -2,13 +2,12 @@
 Tests for the security check link.
 """
 
-import os
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
 from jararaca.links.security import SecurityCheckLink
-from jararaca.utils import CheckResult, CheckStatus
+from jararaca.utils import CheckStatus
 
 
 class TestSecurityCheckLink(unittest.TestCase):

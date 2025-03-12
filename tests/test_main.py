@@ -2,8 +2,6 @@
 Tests for the main entry point of the code quality pipeline.
 """
 
-import os
-import sys
 import unittest
 from unittest.mock import MagicMock, patch
 

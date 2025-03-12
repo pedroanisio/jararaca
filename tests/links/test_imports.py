@@ -2,13 +2,12 @@
 Tests for the imports check link.
 """
 
-import os
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
 from jararaca.links.imports import ImportsCheck
-from jararaca.utils import CheckResult, CheckStatus
+from jararaca.utils import CheckStatus
 
 
 class TestImportsCheck(unittest.TestCase):

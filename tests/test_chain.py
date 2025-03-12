@@ -4,7 +4,6 @@ Tests for the Linked Chain Pattern implementation.
 
 import unittest
 from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
 
 from jararaca.chain import CheckChain, CheckLink
 from jararaca.utils import CheckResult, CheckStatus

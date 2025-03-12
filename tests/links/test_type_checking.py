@@ -5,7 +5,7 @@ Tests for the type checking link.
 import os
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from jararaca.links.type_checking import TypeCheckingLink
 from jararaca.utils import CheckStatus, CommandResult

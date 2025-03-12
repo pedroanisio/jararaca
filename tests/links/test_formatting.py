@@ -2,13 +2,12 @@
 Tests for the formatting check link.
 """
 
-import os
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
 from jararaca.links.formatting import FormattingCheck
-from jararaca.utils import CheckResult, CheckStatus
+from jararaca.utils import CheckStatus
 
 
 class TestFormattingCheck(unittest.TestCase):

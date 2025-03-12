@@ -6,7 +6,6 @@ import os
 import unittest
 from unittest.mock import MagicMock, mock_open, patch
 
-from jararaca.chain import CheckChain
 from jararaca.chain_pipeline import CodeQualityChainPipeline, main
 from jararaca.utils import CheckResult, CheckStatus
 
@@ -184,7 +183,6 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
     def test_main_success(self, mock_pipeline_class, mock_arg_parser):
         """Test main function with successful run."""
-        from jararaca.chain_pipeline import main
 
         # Create mock instances
         mock_args = MagicMock()
@@ -214,7 +212,6 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
     def test_main_failure(self, mock_pipeline_class, mock_arg_parser):
         """Test main function with failed run."""
-        from jararaca.chain_pipeline import main
 
         # Create mock instances
         mock_args = MagicMock()
@@ -244,7 +241,6 @@ class TestCodeQualityChainPipeline(unittest.TestCase):
     @patch("jararaca.chain_pipeline.CodeQualityChainPipeline")
     def test_main_exception(self, mock_pipeline_class, mock_arg_parser):
         """Test main function with exception."""
-        from jararaca.chain_pipeline import main
 
         # Create mock instances
         mock_args = MagicMock()

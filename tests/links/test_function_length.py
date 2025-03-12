@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from jararaca.links.function_length import FunctionLengthCheck
-from jararaca.utils import CheckResult, CheckStatus
+from jararaca.utils import CheckStatus
 
 
 class TestFunctionLengthCheck(unittest.TestCase):
