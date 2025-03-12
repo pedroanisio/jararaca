@@ -14,7 +14,7 @@ with readme_path.open(encoding="utf-8") as fh:
 
 setup(
     name="jararaca",
-    version="0.1.0",
+    version="0.1.1",
     author="PALS",
     author_email="code@faz.ai",
     description="A comprehensive Python code quality validation tool",

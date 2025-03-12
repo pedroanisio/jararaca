@@ -40,3 +40,7 @@ setup: requirements.txt
 init:
 	python3 -m venv venv
 	@echo "Virtual environment created. Activate it by running: source venv/bin/activate"
+
+# Build the package (requires the 'build' package: pip install build)
+build: clean
+	python -m build
