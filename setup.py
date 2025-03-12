@@ -3,20 +3,24 @@
 Setup script for the jararaca code quality package.
 """
 
+import pathlib
+
 from setuptools import find_packages, setup
 
-with open("README.md", "r", encoding="utf-8") as fh:
+here = pathlib.Path(__file__).resolve().parent
+readme_path = here / "README.md"
+with readme_path.open(encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="jararaca",
     version="0.1.0",
-    author="Jararaca Team",
-    author_email="team@example.com",
+    author="PALS",
+    author_email="code@faz.ai",
     description="A comprehensive Python code quality validation tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/jararaca/jararaca",
+    url="https://github.com/pedroanisio/jararaca",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
