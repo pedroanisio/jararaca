@@ -6,13 +6,13 @@ This module provides a check that verifies Python files do not exceed a maximum 
 
 import logging
 import os
-from typing import Any, Dict, List, Tuple, Union, cast
+from typing import Any, Dict, List, Tuple, Union
 
 from ..chain import CheckLink
 from ..utils import CheckResult, CheckStatus
 
 # Define a type alias for the file and line count tuple
-FileLengthEntry = Tuple[str, Union[int, str]]
+file_length_entry = Tuple[str, Union[int, str]]
 
 
 class FileLengthCheck(CheckLink):
@@ -58,8 +58,8 @@ class FileLengthCheck(CheckLink):
             ]
 
         # List to store files exceeding the max length
-        # Each entry is (file_path, line_count) where line_count can be int or str 
-        long_files: List[FileLengthEntry] = []
+        # Each entry is (file_path, line_count) where line_count can be int or str
+        long_files: List[file_length_entry] = []
 
         for source_dir in source_dirs:
             dir_path = os.path.join(project_path, source_dir)
@@ -90,13 +90,13 @@ class FileLengthCheck(CheckLink):
         if long_files:
             status = CheckStatus.FAILED
             details = f"Files exceeding the maximum length of {self.max_lines} lines:\n"
-            
+
             # Access tuple elements safely
             for entry in long_files:
                 # Use our specific type annotation
                 entry_file_path: str = entry[0]
                 # line_count can be int or str, and that's handled by our type alias
-                entry_line_val = entry[1]  
+                entry_line_val = entry[1]
                 details += f"- {entry_file_path}: {entry_line_val} lines\n"
         else:
             status = CheckStatus.PASSED

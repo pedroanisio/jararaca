@@ -17,10 +17,17 @@ class FunctionVisitor(ast.NodeVisitor):
 
     def __init__(self) -> None:
         """Initialize the function visitor."""
-        self.functions: List[Tuple[str, int, int, int]] = []  # [(name, start_line, end_line, length)]
+        self.functions: List[Tuple[str, int, int, int]] = (
+            []
+        )  # [(name, start_line, end_line, length)]
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        """Visit a function definition and record its length."""
+        """
+        Visit a function definition and record its length.
+
+        Args:
+            node: AST function definition node
+        """
         start_line = node.lineno
         end_line = self._get_last_line(node)
         length = end_line - start_line + 1
@@ -28,7 +35,12 @@ class FunctionVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        """Visit an async function definition and record its length."""
+        """
+        Visit an async function definition and record its length.
+
+        Args:
+            node: AST async function definition node
+        """
         start_line = node.lineno
         end_line = self._get_last_line(node)
         length = end_line - start_line + 1
@@ -36,23 +48,28 @@ class FunctionVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        """Visit a class definition and record method lengths."""
+        """
+        Visit a class definition and record method lengths.
+
+        Args:
+            node: AST class definition node
+        """
         self.generic_visit(node)
 
     def _get_last_line(self, node: Any) -> int:
         """
         Get the last line of a node.
-        
+
         Args:
             node: An AST node
-            
+
         Returns:
             The last line number of the node
         """
         # Check if node has a lineno attribute
         if not hasattr(node, "lineno"):
             return 0
-            
+
         max_line: int = node.lineno
         for child in ast.iter_child_nodes(node):
             if hasattr(child, "lineno"):

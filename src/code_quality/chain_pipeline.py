@@ -339,106 +339,127 @@ class CodeQualityChainPipeline:
             "issues": [],
         }
 
-        # Check-specific parsing
+        # Delegate to specific parsers based on check name
         if "Code Formatting" in check_name:
-            if "Files need formatting" in details:
-                # Extract file list if present
-                files = [
-                    line.strip() for line in details.split("\n")[1:] if line.strip()
-                ]
-                parsed["files"] = files
-
+            self._parse_formatting_details(details, parsed)
         elif "Import Sorting" in check_name:
-            # Import sorting might include diffs
-            if "Imports need sorting" in details:
-                # Try to extract file paths and diffs
-                files = []
-                current_file = None
-                for line in details.split("\n"):
-                    if line.startswith("---") and "before" in line:
-                        current_file = (
-                            line.split("---")[1].strip().split(":before")[0].strip()
-                        )
-                        files.append(current_file)
-                parsed["files"] = files
-
+            self._parse_import_sorting_details(details, parsed)
         elif "Linting" in check_name:
-            # Extract individual linting issues
-            issues = []
-            current_issue = None
-            for line in details.split("\n"):
-                if (
-                    line.strip()
-                    and ":" in line
-                    and any(char.isdigit() for char in line)
-                ):
-                    # This looks like a linting issue with line numbers
-                    current_issue = line.strip()
-                    issues.append(current_issue)
-            if issues:
-                parsed["issues"] = issues
-
+            self._parse_linting_details(details, parsed)
         elif "Type Checking" in check_name:
-            # Extract type checking issues
-            issues = []
-            current_issue = None
-            for line in details.split("\n"):
-                if (
-                    line.strip()
-                    and ":" in line
-                    and any(char.isdigit() for char in line)
-                ):
-                    if "error:" in line or "note:" in line:
-                        current_issue = line.strip()
-                        issues.append(current_issue)
-            if issues:
-                parsed["issues"] = issues
-
+            self._parse_type_checking_details(details, parsed)
         elif "Security Check" in check_name:
-            # Extract security issues
-            issues = []
-            for line in details.split("\n"):
-                if "Issue:" in line:
-                    issues.append(line.strip())
-            if issues:
-                parsed["issues"] = issues
-
+            self._parse_security_details(details, parsed)
         elif "Test Coverage" in check_name:
-            # Extract coverage percentage
-            for line in details.split("\n"):
-                if "coverage is" in line.lower():
-                    match = re.search(r"(\d+(?:\.\d+)?)%", line)
-                    if match:
-                        coverage_value = match.group(1)
-                        try:
-                            # Ensure coverage_percentage is typed correctly
-                            parsed["coverage_percentage"] = float(coverage_value)
-                        except ValueError:
-                            pass
-
+            self._parse_coverage_details(details, parsed)
         elif (
             "Naming Conventions" in check_name
             or "File Length" in check_name
             or "Function Length" in check_name
         ):
-            # Extract files/functions exceeding limits
-            issues = []
-            for line in details.split("\n"):
-                if line.strip() and ":" in line and ("/" in line or "\\" in line):
-                    issues.append(line.strip())
-            if issues:
-                parsed["issues"] = issues
-
+            self._parse_code_structure_details(details, parsed)
         elif "Docstring Check" in check_name:
-            # Extract missing docstrings
-            issues = []
-            for line in details.split("\n"):
-                if line.strip() and "-" in line and "function" in line:
-                    issues.append(line.strip())
-            if issues:
-                parsed["issues"] = issues
+            self._parse_docstring_details(details, parsed)
 
         return parsed
+
+    def _parse_formatting_details(self, details: str, parsed: Dict[str, Any]) -> None:
+        """Parse formatting check details."""
+        if "Files need formatting" in details:
+            # Extract file list if present
+            files = [line.strip() for line in details.split("\n")[1:] if line.strip()]
+            parsed["files"] = files
+
+    def _parse_import_sorting_details(
+        self, details: str, parsed: Dict[str, Any]
+    ) -> None:
+        """Parse import sorting check details."""
+        # Import sorting might include diffs
+        if "Imports need sorting" in details:
+            # Try to extract file paths and diffs
+            files = []
+            current_file = None
+            for line in details.split("\n"):
+                if line.startswith("---") and "before" in line:
+                    current_file = (
+                        line.split("---")[1].strip().split(":before")[0].strip()
+                    )
+                    files.append(current_file)
+            parsed["files"] = files
+
+    def _parse_linting_details(self, details: str, parsed: Dict[str, Any]) -> None:
+        """Parse linting check details."""
+        # Extract individual linting issues
+        issues = []
+        current_issue = None
+        for line in details.split("\n"):
+            if line.strip() and ":" in line and any(char.isdigit() for char in line):
+                # This looks like a linting issue with line numbers
+                current_issue = line.strip()
+                issues.append(current_issue)
+        if issues:
+            parsed["issues"] = issues
+
+    def _parse_type_checking_details(
+        self, details: str, parsed: Dict[str, Any]
+    ) -> None:
+        """Parse type checking details."""
+        # Extract type checking issues
+        issues = []
+        current_issue = None
+        for line in details.split("\n"):
+            if line.strip() and ":" in line and any(char.isdigit() for char in line):
+                if "error:" in line or "note:" in line:
+                    current_issue = line.strip()
+                    issues.append(current_issue)
+        if issues:
+            parsed["issues"] = issues
+
+    def _parse_security_details(self, details: str, parsed: Dict[str, Any]) -> None:
+        """Parse security check details."""
+        # Extract security issues
+        issues = []
+        for line in details.split("\n"):
+            if "Issue:" in line:
+                issues.append(line.strip())
+        if issues:
+            parsed["issues"] = issues
+
+    def _parse_coverage_details(self, details: str, parsed: Dict[str, Any]) -> None:
+        """Parse test coverage details."""
+        # Extract coverage percentage
+        for line in details.split("\n"):
+            if "coverage is" in line.lower():
+                match = re.search(r"(\d+(?:\.\d+)?)%", line)
+                if match:
+                    coverage_value = match.group(1)
+                    try:
+                        # Ensure coverage_percentage is typed correctly
+                        parsed["coverage_percentage"] = float(coverage_value)
+                    except ValueError:
+                        pass
+
+    def _parse_code_structure_details(
+        self, details: str, parsed: Dict[str, Any]
+    ) -> None:
+        """Parse naming, file length, and function length details."""
+        # Extract files/functions exceeding limits
+        issues = []
+        for line in details.split("\n"):
+            if line.strip() and ":" in line and ("/" in line or "\\" in line):
+                issues.append(line.strip())
+        if issues:
+            parsed["issues"] = issues
+
+    def _parse_docstring_details(self, details: str, parsed: Dict[str, Any]) -> None:
+        """Parse docstring check details."""
+        # Extract missing docstrings
+        issues = []
+        for line in details.split("\n"):
+            if line.strip() and "-" in line and "function" in line:
+                issues.append(line.strip())
+        if issues:
+            parsed["issues"] = issues
 
     def save_json_output(self, json_file: str) -> None:
         """

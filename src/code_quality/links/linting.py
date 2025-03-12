@@ -16,7 +16,7 @@ class LintingCheck(CheckLink):
     Check link for code linting with Pylint.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a linting check link."""
         super().__init__("Code Linting (Pylint)")
 

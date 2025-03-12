@@ -16,7 +16,7 @@ class ImportsCheck(CheckLink):
     Check link for import sorting with isort.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an imports check link."""
         super().__init__("Import Sorting (isort)")
 

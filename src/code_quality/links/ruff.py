@@ -16,7 +16,7 @@ class RuffCheck(CheckLink):
     Check link for code linting with Ruff.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a Ruff check link."""
         super().__init__("Code Linting (Ruff)")
 

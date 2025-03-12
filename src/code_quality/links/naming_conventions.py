@@ -18,7 +18,7 @@ class NamingConventionsCheck(CheckLink):
     Check link for Python naming conventions according to PEP 8.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a naming conventions check link."""
         super().__init__("Naming Conventions")
 

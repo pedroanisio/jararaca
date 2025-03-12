@@ -126,9 +126,9 @@ def format_result_output(name: str, status: str, details: str = "") -> str:
 
 
 def print_rich_result(
-    title_or_result: Union[str, CheckResult], 
-    status: Optional[Union[CheckStatus, str]] = None, 
-    details: Optional[str] = None
+    title_or_result: Union[str, CheckResult],
+    status: Optional[Union[CheckStatus, str]] = None,
+    details: Optional[str] = None,
 ) -> None:
     """
     Print a rich formatted check result.
@@ -136,7 +136,7 @@ def print_rich_result(
     This function can be called in two ways:
     1. With a single CheckResult object: print_rich_result(result)
     2. With separate parameters: print_rich_result(title, status, details)
-    
+
     Args:
         title_or_result: Either a CheckResult object or a string title
         status: Status of the check, used if title_or_result is a string

@@ -16,7 +16,7 @@ class SecurityCheckLink(CheckLink):
     Check link for security issues with Bandit.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a security check link."""
         super().__init__("Security Check (Bandit)")
 

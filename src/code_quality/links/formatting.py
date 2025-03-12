@@ -16,7 +16,7 @@ class FormattingCheck(CheckLink):
     Check link for code formatting with Black.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a formatting check link."""
         super().__init__("Code Formatting (Black)")
 

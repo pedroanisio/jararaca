@@ -16,13 +16,25 @@ class DocstringVisitor(ast.NodeVisitor):
     """AST visitor that checks for missing docstrings in modules, classes, and functions."""
 
     def __init__(self, skip_private: bool = True) -> None:
-        """Initialize the docstring visitor."""
-        self.missing_docstrings: List[Tuple[str, str, int]] = []  # (type, name, line_number)
+        """
+        Initialize the docstring visitor.
+
+        Args:
+            skip_private: Whether to skip checking private methods/functions
+        """
+        self.missing_docstrings: List[Tuple[str, str, int]] = (
+            []
+        )  # (type, name, line_number)
         self.skip_private = skip_private
         self.has_module_docstring = False
 
     def visit_Module(self, node: ast.Module) -> None:
-        """Visit a module node and check if it has a docstring."""
+        """
+        Visit a module node and check if it has a docstring.
+
+        Args:
+            node: AST module node
+        """
         if ast.get_docstring(node):
             self.has_module_docstring = True
         else:
@@ -32,13 +44,27 @@ class DocstringVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        """Visit a class definition node and check for class docstring."""
-        if not ast.get_docstring(node) and not (self.skip_private and node.name.startswith("_")):
+        """
+        Visit a class definition and check if it has a docstring.
+
+        Args:
+            node: AST class definition node
+        """
+        if not ast.get_docstring(node) and not (
+            self.skip_private and node.name.startswith("_")
+        ):
             self.missing_docstrings.append(("class", node.name, node.lineno))
+        # Continue visiting the class contents
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        """Visit a function definition node and check for function docstring."""
+        """
+        Visit a function definition and check if it has a docstring.
+
+        Args:
+            node: AST function definition node
+        """
+        # Skip checking "private" functions starting with underscore if configured to do so
         if (
             self.skip_private
             and node.name.startswith("_")
@@ -47,13 +73,21 @@ class DocstringVisitor(ast.NodeVisitor):
             self.generic_visit(node)
             return
 
-        if not ast.get_docstring(node) and not (self.skip_private and node.name.startswith("_")):
+        if not ast.get_docstring(node) and not (
+            self.skip_private and node.name.startswith("_")
+        ):
             self.missing_docstrings.append(("function", node.name, node.lineno))
 
         self.generic_visit(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        """Visit an async function definition node."""
+        """
+        Visit an async function definition and check if it has a docstring.
+
+        Args:
+            node: AST async function definition node
+        """
+        # Skip checking "private" functions starting with underscore if configured to do so
         if (
             self.skip_private
             and node.name.startswith("_")
@@ -62,7 +96,9 @@ class DocstringVisitor(ast.NodeVisitor):
             self.generic_visit(node)
             return
 
-        if not ast.get_docstring(node) and not (self.skip_private and node.name.startswith("_")):
+        if not ast.get_docstring(node) and not (
+            self.skip_private and node.name.startswith("_")
+        ):
             self.missing_docstrings.append(("async function", node.name, node.lineno))
 
         self.generic_visit(node)

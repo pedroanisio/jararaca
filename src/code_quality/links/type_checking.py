@@ -16,7 +16,7 @@ class TypeCheckingLink(CheckLink):
     Check link for type checking with mypy.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize a type checking link."""
         super().__init__("Type Checking (mypy)")
 
