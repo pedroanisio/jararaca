@@ -83,7 +83,7 @@ class NamingConventionsCheck(CheckLink):
         Returns:
             A list of naming convention issues found.
         """
-        issues = []
+        issues: List[str] = []
 
         # Skip special module names like __init__, __main__
         if module_name.startswith("__") and module_name.endswith("__"):

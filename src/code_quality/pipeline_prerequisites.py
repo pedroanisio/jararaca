@@ -7,7 +7,7 @@ This module handles checking for required tools and dependencies.
 import logging
 import subprocess
 import sys
-from typing import Any, List, Tuple
+from typing import Any, List
 
 
 def _check_tool_availability(tool: str) -> bool:

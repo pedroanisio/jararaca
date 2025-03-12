@@ -5,9 +5,7 @@ This module contains functions for parsing the output of various code quality ch
 """
 
 import re
-from typing import Any, Dict, Optional, Union
-
-from .utils import CheckResult, CheckStatus
+from typing import Any, Dict
 
 
 def parse_details(check_name: str, details: str) -> Dict[str, Any]:

@@ -1,0 +1,114 @@
+[MASTER]
+# A comma-separated list of file patterns to skip
+ignore=CVS,venv,.git,.pytest_cache,.mypy_cache,__pycache__
+
+# A comma-separated list of paths where Pylint should look for Python packages
+init-hook='import sys; sys.path.append("src")'
+
+# Use multiple processes to speed up Pylint
+jobs=0
+
+# Set the output format
+output-format=text
+
+# Include message's id in output
+include-ids=no
+
+[MESSAGES CONTROL]
+# Disable the message, report, category or checker with the given id(s)
+disable=
+    C0111, # missing-docstring - we have our own docstring checker
+    C0103, # invalid-name - specifically for AST visitor methods
+    C0301, # line-too-long - we handle this with black/flake8
+    W1203, # logging-fstring-interpolation - allow f-strings in logging
+    W0718, # broad-exception-caught - sometimes necessary
+    W0707, # raise-missing-from - not critical
+    W1510, # subprocess-run-check - we handle subprocess errors manually
+    R0801, # duplicate-code - some duplication is expected
+    R0903, # too-few-public-methods - data classes are fine
+    R0902, # too-many-instance-attributes - allow some complex classes
+    W0107, # unnecessary-pass - sometimes useful for readability
+    W1514, # unspecified-encoding - we use UTF-8 by default
+    R1705, # no-else-return - sometimes clearer with else
+    C0414, # useless-import-alias - sometimes useful for clarity
+
+[REPORTS]
+# Set the output format. Available formats are text, parseable, colorized, json
+output-format=text
+
+# Tells whether to display a full report or only the messages
+reports=yes
+
+# Python expression which should return a note less than 10 (10 is the highest
+# note). You have access to the variables 'fatal', 'error', 'warning', 'refactor',
+# 'convention', and 'info' which contain the number of messages in each category,
+# as well as 'statement' which is the total number of statements analyzed.
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+
+# Template used to display messages. This is a python new-style format string
+# used to format the message information.
+msg-template="{path}:{line}:{column}: {msg_id}: {msg} ({symbol})"
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=100
+
+# Regexp for a line that is allowed to be longer than the limit.
+ignore-long-lines=^\s*(# )?<?https?://\S+>?$
+
+# Allow the body of an if to be on the same line as the test if there is no else.
+single-line-if-stmt=no
+
+# Maximum number of lines in a module
+max-module-lines=1000
+
+# String used as indentation unit. This is usually "    " (4 spaces).
+indent-string='    '
+
+# Number of spaces of indent required inside a hanging or continued line.
+indent-after-paren=4
+
+# Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
+expected-line-ending-format=
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=10
+
+# Maximum number of locals for function / method body
+max-locals=15
+
+# Maximum number of return / yield for function / method body
+max-returns=6
+
+# Maximum number of branch for function / method body
+max-branches=12
+
+# Maximum number of statements in function / method body
+max-statements=50
+
+# Maximum number of parents for a class (see R0901).
+max-parents=7
+
+# Maximum number of attributes for a class (see R0902).
+max-attributes=12
+
+# Minimum number of public methods for a class (see R0903).
+min-public-methods=0
+
+# Maximum number of public methods for a class (see R0904).
+max-public-methods=20
+
+# Maximum number of boolean expressions in an if statement
+max-bool-expr=5
+
+[TYPECHECK]
+# List of decorators that produce context managers, such as
+# contextlib.contextmanager.
+contextmanager-decorators=contextlib.contextmanager
+
+# List of module names for which member attributes should not be checked
+ignored-modules=numpy,torch
+
+# List of class names for which member attributes should not be checked
+ignored-classes=SQLObject, SQLAlchemy, scoped_session, pytest 

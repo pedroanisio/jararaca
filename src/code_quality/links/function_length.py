@@ -120,7 +120,7 @@ class FunctionLengthCheck(CheckLink):
                 visitor = FunctionVisitor()
                 visitor.visit(tree)
 
-                for name, start_line, end_line, length in visitor.functions:
+                for name, _, _, length in visitor.functions:
                     if length > self.max_lines:
                         long_functions.append((file_path, name, length))
             except SyntaxError as e:

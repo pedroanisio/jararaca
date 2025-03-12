@@ -9,7 +9,7 @@ removed, or modified without affecting the rest of the pipeline.
 import logging
 import os
 import traceback
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
 from rich.console import Console
@@ -171,7 +171,7 @@ class CodeQualityChainPipeline:
         save_json_output(json_output, json_file, self.console)
 
 
-def _parse_arguments(args: Optional[List[str]] = None) -> ArgumentParser:
+def _parse_arguments(args: Optional[List[str]] = None) -> Namespace:
     """
     Parse command line arguments for the code quality pipeline.
 
@@ -179,7 +179,7 @@ def _parse_arguments(args: Optional[List[str]] = None) -> ArgumentParser:
         args: Command line arguments
 
     Returns:
-        Parsed arguments
+        Parsed arguments as Namespace object
     """
     parser = ArgumentParser(description="Run code quality checks on a Python project.")
     parser.add_argument(
