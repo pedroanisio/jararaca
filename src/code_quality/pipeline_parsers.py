@@ -1,11 +1,13 @@
 """
-Parsers for code quality check results.
+Pipeline parsers module.
 
-This module contains utilities for parsing the detailed output from various code quality checks.
+This module contains functions for parsing the output of various code quality checks.
 """
 
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, Optional, Union
+
+from .utils import CheckResult, CheckStatus
 
 
 def parse_details(check_name: str, details: str) -> Dict[str, Any]:
@@ -53,7 +55,7 @@ def parse_details(check_name: str, details: str) -> Dict[str, Any]:
 def parse_formatting_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse formatting check details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -67,7 +69,7 @@ def parse_formatting_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_import_sorting_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse import sorting check details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -79,9 +81,7 @@ def parse_import_sorting_details(details: str, parsed: Dict[str, Any]) -> None:
         current_file = None
         for line in details.split("\n"):
             if line.startswith("---") and "before" in line:
-                current_file = (
-                    line.split("---")[1].strip().split(":before")[0].strip()
-                )
+                current_file = line.split("---")[1].strip().split(":before")[0].strip()
                 files.append(current_file)
         parsed["files"] = files
 
@@ -89,7 +89,7 @@ def parse_import_sorting_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_linting_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse linting check details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -109,7 +109,7 @@ def parse_linting_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_type_checking_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse type checking details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -129,7 +129,7 @@ def parse_type_checking_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_security_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse security check details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -146,7 +146,7 @@ def parse_security_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_coverage_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse test coverage details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -167,7 +167,7 @@ def parse_coverage_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_code_structure_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse naming, file length, and function length details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -184,7 +184,7 @@ def parse_code_structure_details(details: str, parsed: Dict[str, Any]) -> None:
 def parse_docstring_details(details: str, parsed: Dict[str, Any]) -> None:
     """
     Parse docstring check details.
-    
+
     Args:
         details: The raw details string from the check
         parsed: The dictionary to populate with structured data
@@ -195,4 +195,4 @@ def parse_docstring_details(details: str, parsed: Dict[str, Any]) -> None:
         if line.strip() and "-" in line and "function" in line:
             issues.append(line.strip())
     if issues:
-        parsed["issues"] = issues 
+        parsed["issues"] = issues

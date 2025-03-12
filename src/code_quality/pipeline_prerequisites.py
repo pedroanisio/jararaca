@@ -13,10 +13,10 @@ from typing import Any, List
 def check_prerequisites(console: Any) -> List[str]:
     """
     Check if required tools are installed.
-    
+
     Args:
         console: Rich console instance for output
-        
+
     Returns:
         A list of missing tools, empty if all tools are installed
     """
@@ -62,8 +62,6 @@ def check_prerequisites(console: Any) -> List[str]:
         )
     else:
         logging.info("✓ All required tools are installed.")
-        console.print(
-            "✓ All required tools are installed.", style="bold green"
-        )
-        
-    return missing_tools 
+        console.print("✓ All required tools are installed.", style="bold green")
+
+    return missing_tools

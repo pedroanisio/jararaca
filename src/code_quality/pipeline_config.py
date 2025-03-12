@@ -52,4 +52,4 @@ def load_config(config_file: Optional[str]) -> Dict[str, Any]:
         for key, value in config_parser[section].items():
             config[key] = value
 
-    return config 
+    return config

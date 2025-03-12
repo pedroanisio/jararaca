@@ -16,7 +16,7 @@ from .utils import CheckResult, CheckStatus, create_summary_table, print_rich_re
 def print_summary(console: Any, results: List[CheckResult]) -> None:
     """
     Print a summary of the check results.
-    
+
     Args:
         console: Rich console instance
         results: List of check results
@@ -60,12 +60,12 @@ def results_to_json(
 ) -> Dict[str, Any]:
     """
     Convert check results to a structured JSON format.
-    
+
     Args:
         results: List of check results
         project_path: Path to the project being checked
         config: Configuration dictionary
-        
+
     Returns:
         A dictionary with the structured JSON representation of results
     """
@@ -112,7 +112,7 @@ def results_to_json(
 def save_json_output(json_output: Dict[str, Any], json_file: str, console: Any) -> None:
     """
     Save the check results as JSON to the specified file.
-    
+
     Args:
         json_output: Dictionary containing the results to save
         json_file: Path to the file where the JSON output should be saved
@@ -125,4 +125,4 @@ def save_json_output(json_output: Dict[str, Any], json_file: str, console: Any) 
         console.print(f"Results saved as JSON to {json_file}", style="bold green")
     except Exception as e:
         logging.error(f"Failed to save JSON output: {str(e)}")
-        console.print(f"Failed to save JSON output: {str(e)}", style="bold red") 
+        console.print(f"Failed to save JSON output: {str(e)}", style="bold red")

@@ -8,10 +8,9 @@ removed, or modified without affecting the rest of the pipeline.
 
 import logging
 import os
-import sys
 import traceback
 from argparse import ArgumentParser
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from rich.console import Console
 
@@ -29,7 +28,6 @@ from .links.security import SecurityCheckLink
 from .links.test_coverage import TestCoverageCheck
 from .links.type_checking import TypeCheckingLink
 from .pipeline_config import load_config
-from .pipeline_parsers import parse_details
 from .pipeline_prerequisites import check_prerequisites
 from .pipeline_reporting import print_summary, results_to_json, save_json_output
 from .utils import CheckResult, CheckStatus
