@@ -54,6 +54,37 @@ class FileLengthCheck(CheckLink):
             logging.error(f"Error reading {file_path}: {str(e)}")
             return True, error_msg
 
+    def _format_result(
+        self, long_files: List[file_length_entry]
+    ) -> Tuple[CheckStatus, str]:
+        """
+        Format the result of the file length check.
+
+        Args:
+            long_files: List of tuples containing (file_path, line_count)
+
+        Returns:
+            A tuple containing (status, details)
+        """
+        if long_files:
+            status = CheckStatus.FAILED
+            details = f"Files exceeding the maximum length of {self.max_lines} lines:\n"
+
+            # Access tuple elements safely
+            for entry in long_files:
+                # Use our specific type annotation
+                entry_file_path: str = entry[0]
+                # line_count can be int or str, and that's handled by our type alias
+                entry_line_val = entry[1]
+                details += f"- {entry_file_path}: {entry_line_val} lines\n"
+        else:
+            status = CheckStatus.PASSED
+            details = (
+                f"All files are under the maximum length of {self.max_lines} lines."
+            )
+
+        return status, details
+
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
         Execute the file length check.
@@ -98,21 +129,5 @@ class FileLengthCheck(CheckLink):
                         long_files.append((file_path, line_count))
 
         # Determine the status based on long files found
-        if long_files:
-            status = CheckStatus.FAILED
-            details = f"Files exceeding the maximum length of {self.max_lines} lines:\n"
-
-            # Access tuple elements safely
-            for entry in long_files:
-                # Use our specific type annotation
-                entry_file_path: str = entry[0]
-                # line_count can be int or str, and that's handled by our type alias
-                entry_line_val = entry[1]
-                details += f"- {entry_file_path}: {entry_line_val} lines\n"
-        else:
-            status = CheckStatus.PASSED
-            details = (
-                f"All files are under the maximum length of {self.max_lines} lines."
-            )
-
+        status, details = self._format_result(long_files)
         return [CheckResult(name=self.name, status=status, details=details)]

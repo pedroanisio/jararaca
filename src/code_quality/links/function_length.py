@@ -130,6 +130,34 @@ class FunctionLengthCheck(CheckLink):
 
         return long_functions
 
+    def _format_result(
+        self, long_functions: List[Tuple[str, str, int]]
+    ) -> Tuple[CheckStatus, str]:
+        """
+        Format the result of the function length check.
+
+        Args:
+            long_functions: List of tuples containing (file_path, function_name, line_count)
+
+        Returns:
+            A tuple containing (status, details)
+        """
+        if long_functions:
+            status = CheckStatus.FAILED
+            details = (
+                f"Functions exceeding the maximum length of {self.max_lines} lines:\n"
+            )
+            for file_path, func_name, line_count in long_functions:
+                if line_count > 0:
+                    details += f"- {file_path}: {func_name} ({line_count} lines)\n"
+                else:
+                    details += f"- {file_path}: {func_name}\n"
+        else:
+            status = CheckStatus.PASSED
+            details = f"All functions are under {self.max_lines} lines"
+
+        return status, details
+
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:
         """
         Execute the function length check.
@@ -167,18 +195,5 @@ class FunctionLengthCheck(CheckLink):
                     file_path = os.path.join(root, file)
                     long_functions.extend(self._process_file(file_path))
 
-        if long_functions:
-            status = CheckStatus.FAILED
-            details = (
-                f"Functions exceeding the maximum length of {self.max_lines} lines:\n"
-            )
-            for file_path, func_name, line_count in long_functions:
-                if line_count > 0:
-                    details += f"- {file_path}: {func_name} ({line_count} lines)\n"
-                else:
-                    details += f"- {file_path}: {func_name}\n"
-        else:
-            status = CheckStatus.PASSED
-            details = f"All functions are under {self.max_lines} lines"
-
+        status, details = self._format_result(long_functions)
         return [CheckResult(self.name, status, details)]

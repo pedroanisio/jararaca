@@ -157,13 +157,15 @@ class DocstringCheck(CheckLink):
 
         return missing_docstrings
 
-    def _format_result(self, missing_docstrings: List[Tuple[str, str, int]]) -> Tuple[CheckStatus, str]:
+    def _format_result(
+        self, missing_docstrings: List[Tuple[str, str, int]]
+    ) -> Tuple[CheckStatus, str]:
         """
         Format the result of the docstring check.
-        
+
         Args:
             missing_docstrings: List of tuples containing (file_path, element_description, line_number)
-            
+
         Returns:
             A tuple containing (status, details)
         """
@@ -178,7 +180,7 @@ class DocstringCheck(CheckLink):
         else:
             status = CheckStatus.PASSED
             details = "All modules, classes, and functions have docstrings."
-            
+
         return status, details
 
     def _execute_check(self, context: Dict[str, Any]) -> List[CheckResult]:

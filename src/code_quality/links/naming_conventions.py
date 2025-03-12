@@ -169,30 +169,44 @@ class NamingConventionsCheck(CheckLink):
     def _should_skip_variable(self, variable_name: str) -> bool:
         """
         Check if a variable name should be skipped in the naming convention check.
-        
+
         Args:
             variable_name: The name of the variable to check
-            
+
         Returns:
             True if the variable should be skipped, False otherwise
         """
         # Skip Python keywords and common pattern variables
         python_keywords = [
-            "self", "cls", "True", "False", "None", "import",
-            "from", "as", "class", "def", "for", "if", "return", "yield",
+            "self",
+            "cls",
+            "True",
+            "False",
+            "None",
+            "import",
+            "from",
+            "as",
+            "class",
+            "def",
+            "for",
+            "if",
+            "return",
+            "yield",
         ]
-        
-        return (variable_name in python_keywords or 
-                variable_name.lower() in self.common_words)
-    
+
+        return (
+            variable_name in python_keywords
+            or variable_name.lower() in self.common_words
+        )
+
     def _check_constant_name(self, variable_name: str, file_path: str) -> List[str]:
         """
         Check if a constant name follows the UPPER_CASE convention.
-        
+
         Args:
             variable_name: The name of the constant to check
             file_path: The path to the file being checked
-            
+
         Returns:
             A list of naming convention issues found
         """
@@ -202,15 +216,17 @@ class NamingConventionsCheck(CheckLink):
                 f"Constant '{variable_name}' in {file_path} does not follow UPPER_CASE convention"
             )
         return issues
-    
-    def _check_regular_variable_name(self, variable_name: str, file_path: str) -> List[str]:
+
+    def _check_regular_variable_name(
+        self, variable_name: str, file_path: str
+    ) -> List[str]:
         """
         Check if a regular variable name follows the snake_case convention.
-        
+
         Args:
             variable_name: The name of the variable to check
             file_path: The path to the file being checked
-            
+
         Returns:
             A list of naming convention issues found
         """
@@ -255,8 +271,10 @@ class NamingConventionsCheck(CheckLink):
                 continue
             # Otherwise it should be a regular variable
             else:
-                issues.extend(self._check_regular_variable_name(variable_name, file_path))
-                
+                issues.extend(
+                    self._check_regular_variable_name(variable_name, file_path)
+                )
+
         return issues
 
     def _check_file_content(self, content: str, file_path: str) -> List[str]:
