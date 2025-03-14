@@ -1,0 +1,66 @@
+name: Build and Deploy Jararaca
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  test-build-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install build twine pytest pytest-cov black isort
+        
+    - name: Run tests with coverage
+      run: |
+        pytest --cov=src/jararaca --cov-report=term-missing
+        
+    - name: Format code with Black and isort
+      run: |
+        black .
+        isort .
+        
+    - name: Build package
+      run: python -m build
+      
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      
+    - name: Upload to Google Artifact Registry
+      run: |
+        # Set variables
+        REPO_NAME=arc4d3-pypi
+        LOCATION=us-west1
+        PROJECT_ID=$(gcloud config get-value project)
+        PYTHON_REPO_URL=https://${LOCATION}-python.pkg.dev/${PROJECT_ID}/${REPO_NAME}
+        
+        # Configure authentication
+        echo "[distutils]" > ~/.pypirc
+        echo "index-servers =" >> ~/.pypirc
+        echo "    gcp" >> ~/.pypirc
+        echo "" >> ~/.pypirc
+        echo "[gcp]" >> ~/.pypirc
+        echo "repository: ${PYTHON_REPO_URL}" >> ~/.pypirc
+        echo "username: oauth2accesstoken" >> ~/.pypirc
+        echo "password: $(gcloud auth print-access-token)" >> ~/.pypirc
+        
+        # Upload package
+        twine upload --repository-url ${PYTHON_REPO_URL} dist/*
