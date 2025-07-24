@@ -2,7 +2,7 @@
 # ------------------------
 
 # Variables
-PYTHON := python3
+PYTHON := python
 PIP := pip
 PYTEST := pytest
 COVERAGE_PATH := src/jararaca
